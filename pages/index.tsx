@@ -53,6 +53,7 @@ const LandingPage = ({
   hat,
   skyInChief
 }: LandingPageData) => {
+  console.log('sky governance portal staging');
   const bpi = useBreakpointIndex();
   const [videoOpen, setVideoOpen] = useState(false);
 
