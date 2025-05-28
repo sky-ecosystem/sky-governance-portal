@@ -63,14 +63,13 @@ export const CHAIN_INFO: ChainInfo = {
     label: 'Mainnet',
     type: 'normal',
     network: SupportedNetworks.MAINNET,
-    defaultRpc: NodeProviders.ALCHEMY,
+    defaultRpc: NodeProviders.TENDERLY,
     subgraphUrl:
       process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
         ? MAINNET_STAGING_SUBGRAPH_URL
         : MAINNET_PROD_SUBGRAPH_URL,
     rpcs: {
-      [NodeProviders.INFURA]: `https://mainnet.infura.io/v3/${config.INFURA_KEY}`,
-      [NodeProviders.ALCHEMY]: `https://eth-mainnet.g.alchemy.com/v2/${config.ALCHEMY_KEY}`
+      [NodeProviders.TENDERLY]: process.env.NEXT_PUBLIC_RPC_MAINNET || ''
     },
     showInProduction: true
   },
@@ -81,10 +80,9 @@ export const CHAIN_INFO: ChainInfo = {
     label: 'ArbitrumTestnet',
     type: 'gasless',
     network: SupportedNetworks.ARBITRUMTESTNET,
-    defaultRpc: NodeProviders.ALCHEMY,
-    subgraphUrl: ARBITRUM_TENDERLY_SUBGRAPH_URL,
+    defaultRpc: NodeProviders.TENDERLY,
     rpcs: {
-      [NodeProviders.ALCHEMY]: `https://arb-sepolia.g.alchemy.com/v2/${config.ALCHEMY_ARBITRUM_TESTNET_KEY}`
+      [NodeProviders.TENDERLY]: process.env.NEXT_PUBLIC_RPC_ARBITRUM_TESTNET || ''
     },
     showInProduction: false
   },
@@ -95,13 +93,13 @@ export const CHAIN_INFO: ChainInfo = {
     label: 'Arbitrum',
     type: 'gasless',
     network: SupportedNetworks.ARBITRUM,
-    defaultRpc: NodeProviders.ALCHEMY,
+    defaultRpc: NodeProviders.TENDERLY,
     subgraphUrl:
       process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
         ? ARBITRUM_STAGING_SUBGRAPH_URL
         : ARBITRUM_PROD_SUBGRAPH_URL,
     rpcs: {
-      [NodeProviders.ALCHEMY]: `https://arb-mainnet.g.alchemy.com/v2/${config.ALCHEMY_ARBITRUM_KEY}`
+      [NodeProviders.TENDERLY]: process.env.NEXT_PUBLIC_RPC_ARBITRUM || ''
     },
     showInProduction: false
   },
