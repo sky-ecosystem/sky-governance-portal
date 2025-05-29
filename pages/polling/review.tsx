@@ -87,7 +87,7 @@ const PollingReview = ({ polls: activePolls, activePollIds, tags }: PollingRevie
       const poll = previousVotedPolls.find(poll => poll.pollId === modalPollId);
       if (!poll) return '';
       const option = poll.options[previousBallot[poll.pollId].option as number];
-      url = `https://vote.makerdao.com/polling/${poll.slug}`;
+      url = `https://vote.sky.money/polling/${poll.slug}`;
       text = `I just voted ${
         option ? option + ' ' : ''
       }on a Sky Ecosystem governance poll! Learn more about the poll on the Governance Portal:`;
@@ -135,7 +135,7 @@ const PollingReview = ({ polls: activePolls, activePollIds, tags }: PollingRevie
         option = markdownArray.reduce((previousValue, currentValue) => previousValue + currentValue);
       }
 
-      markdown += `[${poll.title}](https://vote.makerdao.com/polling/${poll.slug}) ([thread](${poll.discussionLink}))  \n`;
+      markdown += `[${poll.title}](https://vote.sky.money/polling/${poll.slug}) ([thread](${poll.discussionLink}))  \n`;
       if (option) markdown += `Voted: ${option}  \n`;
       markdown += '  \n';
     });
