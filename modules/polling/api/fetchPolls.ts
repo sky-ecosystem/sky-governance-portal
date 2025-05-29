@@ -39,10 +39,13 @@ export async function refetchPolls(network: SupportedNetworks): Promise<{
   while (refetchSubgraph) {
     const response = await gqlRequest<Promise<{ arbitrumPolls: SubgraphPoll[] }>>({
       chainId: arbitrumChainId,
-      query: network === SupportedNetworks.MAINNET && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'development' ? arbitrumPollsQueryWithWhitelist : arbitrumPollsQuery,
+      query:
+        network === SupportedNetworks.MAINNET && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'development'
+          ? arbitrumPollsQueryWithWhitelist
+          : arbitrumPollsQuery,
       variables:
         network === SupportedNetworks.MAINNET && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'development'
-          ? { argsSkip: skip, creatorWhitelist: POLL_CREATOR_WHITELIST }
+          ? { argsSkip: skip, creatorWhitelist: POLL_CREATOR_WHITELIST.map(w => w.toLowerCase()) }
           : { argsSkip: skip }
     });
 
@@ -311,7 +314,6 @@ export async function getPollsPaginated({
   endDate
 }: PollsValidatedQueryParams): Promise<PollsPaginatedResponse> {
   const pollList = await getPollList(network);
-
   const pollFilters = { pageSize, page, title, orderBy, tags, status, type, startDate, endDate };
   const filteredPollList = filterPollList(pollList, pollFilters);
   const pollTags = reducePollTags(pollList, filteredPollList.polls);
