@@ -81,6 +81,7 @@ export const CHAIN_INFO: ChainInfo = {
     type: 'gasless',
     network: SupportedNetworks.ARBITRUMTESTNET,
     defaultRpc: NodeProviders.TENDERLY,
+    subgraphUrl: ARBITRUM_TENDERLY_SUBGRAPH_URL,
     rpcs: {
       [NodeProviders.TENDERLY]: process.env.NEXT_PUBLIC_RPC_ARBITRUM_TESTNET || ''
     },
