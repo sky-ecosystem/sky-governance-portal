@@ -71,14 +71,13 @@ const LandingPage = ({
   // executives
   const { data: votedProposals, mutate: mutateVotedProposals } = useVotedProposals();
 
-  const firstProposal = proposals[0];
-  const formattedFirstProposal = {
-    ...firstProposal,
+  const formattedProposals = proposals.map(proposal => ({
+    ...proposal,
     spellData: {
-      ...firstProposal.spellData,
-      skySupport: formatValue(BigInt(firstProposal.spellData.skySupport || 0), 'wad', 2, false)
+      ...proposal.spellData,
+      skySupport: formatValue(BigInt(proposal.spellData.skySupport || 0), 'wad', 2, false)
     }
-  };
+  }));
 
   // revalidate votedProposals if connected address changes
   useEffect(() => {
@@ -130,7 +129,7 @@ const LandingPage = ({
                           votedProposals={votedProposals}
                           account={account}
                           isHat={hat ? hat.toLowerCase() === proposals[0].address.toLowerCase() : false}
-                          proposal={formattedFirstProposal}
+                          proposal={formattedProposals[0]}
                         />
                       ) : (
                         <Text>No proposals found</Text>
