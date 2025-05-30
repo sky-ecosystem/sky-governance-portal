@@ -39,6 +39,7 @@ import { LandingPageData } from 'modules/home/api/fetchLandingPageData';
 import { useLandingPageDelegates } from 'modules/gql/hooks/useLandingPageDelegates';
 import { useNetwork } from 'modules/app/hooks/useNetwork';
 import { parseEther } from 'viem';
+import { formatValue } from 'lib/string';
 
 const LandingPage = ({
   proposals,
@@ -69,6 +70,14 @@ const LandingPage = ({
 
   // executives
   const { data: votedProposals, mutate: mutateVotedProposals } = useVotedProposals();
+
+  const formattedProposals = proposals.map(proposal => ({
+    ...proposal,
+    spellData: {
+      ...proposal.spellData,
+      skySupport: formatValue(BigInt(proposal.spellData.skySupport || 0), 'wad', 2, false)
+    }
+  }));
 
   // revalidate votedProposals if connected address changes
   useEffect(() => {
@@ -120,7 +129,7 @@ const LandingPage = ({
                           votedProposals={votedProposals}
                           account={account}
                           isHat={hat ? hat.toLowerCase() === proposals[0].address.toLowerCase() : false}
-                          proposal={proposals[0]}
+                          proposal={formattedProposals[0]}
                         />
                       ) : (
                         <Text>No proposals found</Text>
