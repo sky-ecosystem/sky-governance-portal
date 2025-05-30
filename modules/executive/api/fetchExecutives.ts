@@ -81,7 +81,7 @@ export async function getGithubExecutives(network: SupportedNetworks): Promise<C
 
   const proposals = githubProposals.map(proposal => {
     try {
-      const path = `https://raw.githubusercontent.com/${githubRepo.owner}/${githubRepo.repo}/refs/heads/${githubRepo.branch}/${proposal.path}`;
+      const path = `https://raw.githubusercontent.com/${githubRepo.owner}/${githubRepo.repo}/${githubRepo.branch}/${proposal.path}`;
       return parseExecutive(proposal, activeProposals, path, network);
     } catch (e) {
       logger.error(`getGithubExecutives: network ${network}`, e);
