@@ -15,11 +15,14 @@ import {
   delegatesGithubCacheKey,
   executiveSupportersCacheKey,
   githubExecutivesCacheKey,
-  executiveProposalsCacheKey
+  executiveProposalsCacheKey,
+  pollListCacheKey,
+  partialActivePollsCacheKey
 } from 'modules/cache/constants/cache-keys';
 import { config } from 'lib/config';
 import { ApiError } from 'modules/app/api/ApiError';
 import validateQueryParam from 'modules/app/api/validateQueryParam';
+import { ONE_WEEK_IN_MS } from 'modules/app/constants/time';
 
 // Deletes cache for a tally
 export default withApiHandler(
@@ -36,14 +39,16 @@ export default withApiHandler(
       new ApiError('Invalid network', 400, 'Invalid network')
     ) as SupportedNetworks;
 
+    const pollsAllowedCacheKeys = ['parsed-tally-', pollListCacheKey, partialActivePollsCacheKey];
+
     // Allowed cache keys to be deleted, they can be partial since we just check that the key is on the requested path.
     const allowedCacheKeys = [
       'parsed-tally-',
       executiveProposalsCacheKey,
       executiveSupportersCacheKey,
       githubExecutivesCacheKey,
-      'polls-',
-      delegatesGithubCacheKey
+      delegatesGithubCacheKey,
+      ...pollsAllowedCacheKeys
     ];
 
     try {
@@ -56,6 +61,8 @@ export default withApiHandler(
       const isAllowed = allowedCacheKeys.reduce((prev, next) => {
         return prev || cacheKey.indexOf(next) !== -1;
       }, false);
+      const isPollCacheKey = pollsAllowedCacheKeys.some(key => cacheKey.includes(key));
+      const expiryMs = isPollCacheKey ? ONE_WEEK_IN_MS : undefined;
 
       if (!isAllowed || !cacheKey) {
         throw new ApiError('Invalidate cache, invalid request', 400, 'Invalid request');
@@ -63,7 +70,7 @@ export default withApiHandler(
 
       logger.debug(`invalidate-cache request: ${cacheKey}`);
 
-      cacheDel(cacheKey, network);
+      cacheDel(cacheKey, network, expiryMs);
 
       return res.status(200).json({
         invalidated: true,

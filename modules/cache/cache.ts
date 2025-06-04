@@ -96,14 +96,18 @@ export const cacheDel = (name: string, network: SupportedNetworks, expiryMs?: nu
   }
 };
 
-export const getCacheInfo = async (name: string, network: SupportedNetworks): Promise<any> => {
+export const getCacheInfo = async (
+  name: string,
+  network: SupportedNetworks,
+  expiryMs?: number
+): Promise<any> => {
   if (!config.USE_CACHE || config.USE_CACHE === 'false') {
     return Promise.resolve(null);
   }
 
   try {
     const currentNetwork = network || DEFAULT_NETWORK.network;
-    const path = getFilePath(name, currentNetwork);
+    const path = getFilePath(name, currentNetwork, expiryMs);
 
     if (redisCacheEnabled()) {
       // if fetching proposals cache info, there are likely multiple keys cached due to different query params
