@@ -18,7 +18,9 @@ import {
   executiveSupportersCacheKey,
   getPollTallyCacheKey,
   githubExecutivesCacheKey,
-  executiveProposalsCacheKey
+  executiveProposalsCacheKey,
+  pollListCacheKey,
+  partialActivePollsCacheKey
 } from 'modules/cache/constants/cache-keys';
 import { invalidateCache } from 'modules/cache/invalidateCache';
 import { toast } from 'react-toastify';
@@ -121,6 +123,17 @@ const DashboardPage = (): React.ReactElement => {
                   <Box sx={{ m: 3 }}>
                     <Button
                       onClick={() => {
+                        invalidate(pollListCacheKey);
+                        invalidate(partialActivePollsCacheKey);
+                      }}
+                      disabled={loading}
+                    >
+                      All polls
+                    </Button>
+                  </Box>
+                  <Box sx={{ m: 3 }}>
+                    <Button
+                      onClick={() => {
                         invalidate(githubExecutivesCacheKey);
                         invalidate(executiveProposalsCacheKey);
                       }}
@@ -171,6 +184,24 @@ const DashboardPage = (): React.ReactElement => {
                   <Button variant="outline" onClick={fetchCacheInfo}>
                     Refresh
                   </Button>
+                </Flex>
+                <Flex sx={{ mt: 2 }}>
+                  <Text sx={{ fontWeight: 'semiBold' }}>Poll list:</Text>
+                  {cacheInfo[pollListCacheKey] > 0 ? (
+                    <Text sx={{ ml: 2 }}>{`Expires in ${cacheInfo[pollListCacheKey]} seconds`}</Text>
+                  ) : (
+                    <Text sx={{ ml: 2 }}>No cache found</Text>
+                  )}
+                </Flex>
+                <Flex sx={{ mt: 2 }}>
+                  <Text sx={{ fontWeight: 'semiBold' }}>Partial active polls:</Text>
+                  {cacheInfo[partialActivePollsCacheKey] > 0 ? (
+                    <Text
+                      sx={{ ml: 2 }}
+                    >{`Expires in ${cacheInfo[partialActivePollsCacheKey]} seconds`}</Text>
+                  ) : (
+                    <Text sx={{ ml: 2 }}>No cache found</Text>
+                  )}
                 </Flex>
                 <Flex sx={{ mt: 2 }}>
                   <Text sx={{ fontWeight: 'semiBold' }}>Executives proposals:</Text>

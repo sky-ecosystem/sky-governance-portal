@@ -225,7 +225,7 @@ const Delegates = ({
       <HeadComponent
         title="Delegates"
         description="Vote delegation allows for SKY holders to delegate their voting power to delegates, which increases the effectiveness and efficiency of the governance process."
-        image={'https://vote.makerdao.com/seo/delegates.png'}
+        image={'https://vote.sky.money/seo/delegates.png'}
       />
       <Stack>
         <Flex sx={{ alignItems: 'center', flexDirection: ['column', 'row'] }}>

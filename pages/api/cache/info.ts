@@ -14,10 +14,13 @@ import { getCacheInfo } from 'modules/cache/cache';
 import {
   delegatesGithubCacheKey,
   executiveSupportersCacheKey,
-  executiveProposalsCacheKey
+  executiveProposalsCacheKey,
+  pollListCacheKey,
+  partialActivePollsCacheKey
 } from 'modules/cache/constants/cache-keys';
 import { ApiError } from 'modules/app/api/ApiError';
 import validateQueryParam from 'modules/app/api/validateQueryParam';
+import { ONE_WEEK_IN_MS } from 'modules/app/constants/time';
 
 // fetches cache info for constant keys
 export default withApiHandler(async (req: NextApiRequest, res: NextApiResponse) => {
@@ -34,13 +37,21 @@ export default withApiHandler(async (req: NextApiRequest, res: NextApiResponse) 
   ) as SupportedNetworks;
 
   // keys to check
-  const allowedCacheKeys = [executiveProposalsCacheKey, executiveSupportersCacheKey, delegatesGithubCacheKey];
+  const allowedCacheKeys = [
+    { name: pollListCacheKey, expiryMs: ONE_WEEK_IN_MS },
+    { name: partialActivePollsCacheKey, expiryMs: ONE_WEEK_IN_MS },
+    { name: executiveProposalsCacheKey },
+    { name: executiveSupportersCacheKey },
+    { name: delegatesGithubCacheKey }
+  ];
 
   try {
-    const promises = await Promise.all(allowedCacheKeys.map(key => getCacheInfo(key, network)));
+    const promises = await Promise.all(
+      allowedCacheKeys.map(key => getCacheInfo(key.name, network, key.expiryMs))
+    );
     const response = {};
     promises.map((key, index) => {
-      response[allowedCacheKeys[index]] = key;
+      response[allowedCacheKeys[index].name] = key;
     });
 
     return res.status(200).json({
