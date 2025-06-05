@@ -14,6 +14,7 @@ import { Transaction, TXMined, TXPending, TXInitialized, TXError } from '../type
 import { parseTxError } from '../helpers/errors';
 import { SupportedNetworks } from '../constants/networks';
 import { getPublicClient } from '../helpers/getPublicClient';
+import { networkNameToChainId } from 'modules/web3/helpers/chain';
 
 export type TxCallbacks = {
   initialized?: (txId: string) => void;
@@ -142,33 +143,72 @@ const [useTransactionsStore, transactionsApi] = create<Store>((set, get) => ({
   },
 
   listen: async (txPromise, txId, callbacks) => {
-    let tx: ViemTransaction;
+    let txFullObject: ViemTransaction;
+    let knownTxState: Transaction | undefined;
     try {
-      tx = await txPromise;
+      knownTxState = get().transactions.find(t => t.id === txId);
+      if (!knownTxState) {
+        console.error(
+          `Transaction state for ${txId} not found in store. Proceeding without fallback chainId derivation.`
+        );
+      }
+
+      txFullObject = await txPromise;
     } catch (e) {
-      get().setError(txId, e);
-      if (typeof callbacks?.error === 'function') callbacks.error(txId, parseTxError(e));
+      get().setError(txId, e as Error);
+      if (typeof callbacks?.error === 'function') callbacks.error(txId, parseTxError(e as Error));
       return;
     }
-    // We are in "pending" state because the txn has now been been sent
-    get().setPending(txId, tx.hash);
-    if (typeof callbacks?.pending === 'function') callbacks.pending(tx.hash);
 
-    if (tx.chainId) {
-      const publicClient = getPublicClient(tx.chainId);
-      // Handle mined or error txns
+    get().setPending(txId, txFullObject.hash);
+    if (typeof callbacks?.pending === 'function') callbacks.pending(txFullObject.hash);
+
+    let chainIdToUse: number | undefined = txFullObject.chainId;
+
+    if (chainIdToUse === undefined || chainIdToUse === null) {
+      console.warn(`Transaction ${txFullObject.hash} (ID: ${txId}) is missing chainId from RPC response.`);
+      if (knownTxState && knownTxState.gaslessNetwork) {
+        try {
+          const derivedChainId = networkNameToChainId(knownTxState.gaslessNetwork);
+          if (derivedChainId !== undefined) {
+            chainIdToUse = derivedChainId;
+            console.log(
+              `Using derived chainId ${chainIdToUse} for tx ${txFullObject.hash} (ID: ${txId}) from gaslessNetwork ${knownTxState.gaslessNetwork}.`
+            );
+          } else {
+            console.error(
+              `Could not derive chainId for tx ${txFullObject.hash} (ID: ${txId}) using gaslessNetwork ${knownTxState.gaslessNetwork}.`
+            );
+          }
+        } catch (e) {
+          console.error(
+            `Error deriving chainId for tx ${txFullObject.hash} (ID: ${txId}) with gaslessNetwork ${knownTxState.gaslessNetwork}:`,
+            e
+          );
+        }
+      } else {
+        console.warn(
+          `No knownTxState or gaslessNetwork available for tx ${txFullObject.hash} (ID: ${txId}) to derive chainId.`
+        );
+      }
+    }
+
+    if (chainIdToUse !== undefined && chainIdToUse !== null) {
+      const publicClient = getPublicClient(chainIdToUse);
       publicClient
-        .waitForTransactionReceipt({ hash: tx.hash })
+        .waitForTransactionReceipt({ hash: txFullObject.hash })
         .then(() => {
           get().setMined(txId);
-          if (typeof callbacks?.mined === 'function') callbacks.mined(txId, tx.hash);
+          if (typeof callbacks?.mined === 'function') callbacks.mined(txId, txFullObject.hash);
         })
         .catch(e => {
-          get().setError(txId, e);
-          if (typeof callbacks?.error === 'function') callbacks.error(txId, parseTxError(e));
+          get().setError(txId, e as Error);
+          if (typeof callbacks?.error === 'function') callbacks.error(txId, parseTxError(e as Error));
         });
     } else {
-      const e = new Error('Transaction chainId is not defined');
+      const e = new Error(
+        `Transaction chainId is not defined and could not be derived for tx ${txFullObject.hash} (ID: ${txId})`
+      );
       get().setError(txId, e);
       if (typeof callbacks?.error === 'function') callbacks.error(txId, parseTxError(e));
     }
