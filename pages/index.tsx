@@ -28,7 +28,7 @@ import TopDelegates from 'modules/delegates/components/TopDelegates';
 import { ResourcesLanding } from 'modules/home/components/ResourcesLanding/ResourcesLanding';
 import { PollsOverviewLanding } from 'modules/home/components/PollsOverviewLanding';
 import { InternalLink } from 'modules/app/components/InternalLink';
-import InformationParticipateMakerGovernance from 'modules/home/components/InformationParticipateMakerGovernance/InformationParticipateMakerGovernance';
+import InformationParticipateSkyGovernance from 'modules/home/components/InformationParticipateSkyGovernance/InformationParticipateSkyGovernance';
 import { useBreakpointIndex } from '@theme-ui/match-media';
 import { useAccount } from 'modules/app/hooks/useAccount';
 import { VIDEO_URLS } from 'modules/app/client/videos.constants';
@@ -39,6 +39,7 @@ import { LandingPageData } from 'modules/home/api/fetchLandingPageData';
 import { useLandingPageDelegates } from 'modules/gql/hooks/useLandingPageDelegates';
 import { useNetwork } from 'modules/app/hooks/useNetwork';
 import { parseEther } from 'viem';
+import { formatValue } from 'lib/string';
 
 const LandingPage = ({
   proposals,
@@ -49,9 +50,9 @@ const LandingPage = ({
   delegatesInfo,
   delegatesError,
   stats,
-  mkrOnHat,
+  skyOnHat,
   hat,
-  mkrInChief
+  skyInChief
 }: LandingPageData) => {
   const bpi = useBreakpointIndex();
   const [videoOpen, setVideoOpen] = useState(false);
@@ -69,6 +70,14 @@ const LandingPage = ({
 
   // executives
   const { data: votedProposals, mutate: mutateVotedProposals } = useVotedProposals();
+
+  const formattedProposals = proposals.map(proposal => ({
+    ...proposal,
+    spellData: {
+      ...proposal.spellData,
+      skySupport: formatValue(BigInt(proposal.spellData.skySupport || 0), 'wad', 2, false)
+    }
+  }));
 
   // revalidate votedProposals if connected address changes
   useEffect(() => {
@@ -120,7 +129,7 @@ const LandingPage = ({
                           votedProposals={votedProposals}
                           account={account}
                           isHat={hat ? hat.toLowerCase() === proposals[0].address.toLowerCase() : false}
-                          proposal={proposals[0]}
+                          proposal={formattedProposals[0]}
                         />
                       ) : (
                         <Text>No proposals found</Text>
@@ -139,8 +148,8 @@ const LandingPage = ({
               <GovernanceStats
                 pollStats={pollStats}
                 stats={stats}
-                mkrOnHat={mkrOnHat}
-                mkrInChief={mkrInChief}
+                skyOnHat={skyOnHat}
+                skyInChief={skyInChief}
               />
             </ErrorBoundary>
           </section>
@@ -155,7 +164,7 @@ const LandingPage = ({
           <section id="delegate">
             <TopDelegates
               topDelegates={delegates}
-              totalMKRDelegated={parseEther((stats?.totalMKRDelegated || 0).toString())}
+              totalSkyDelegated={parseEther((stats?.totalSkyDelegated || 0).toString())}
             />
           </section>
 
@@ -173,7 +182,7 @@ const LandingPage = ({
                 height: '1720px'
               }}
             />
-            <InformationParticipateMakerGovernance />
+            <InformationParticipateSkyGovernance />
             <ResourcesLanding />
           </Box>
 
@@ -197,9 +206,9 @@ export default function Index({
   polls: prefetchedPolls,
   pollStats: prefetchedPollStats,
   pollTags: prefetchedPollTags,
-  mkrOnHat: prefetchedMkrOnHat,
+  skyOnHat: prefetchedSkyOnHat,
   hat: prefetchedHat,
-  mkrInChief: prefetchedMkrInChief
+  skyInChief: prefetchedSkyInChief
 }: LandingPageData): JSX.Element {
   const network = useNetwork();
   const [delegatesData, delegatesInfo] = useLandingPageDelegates();
@@ -209,9 +218,9 @@ export default function Index({
         polls: prefetchedPolls,
         pollStats: prefetchedPollStats,
         pollTags: prefetchedPollTags,
-        mkrOnHat: prefetchedMkrOnHat,
+        skyOnHat: prefetchedSkyOnHat,
         hat: prefetchedHat,
-        mkrInChief: prefetchedMkrInChief
+        skyInChief: prefetchedSkyInChief
       }
     : null;
 
@@ -249,16 +258,16 @@ export default function Index({
     delegatesInfo: delegatesInfo.data ?? [],
     delegatesError: delegatesData.error || delegatesInfo.error,
     stats: delegatesData.data?.stats,
-    mkrOnHat: isDefaultNetwork(network) ? prefetchedMkrOnHat : data?.mkrOnHat ?? undefined,
+    skyOnHat: isDefaultNetwork(network) ? prefetchedSkyOnHat : data?.skyOnHat ?? undefined,
     hat: isDefaultNetwork(network) ? prefetchedHat : data?.hat ?? undefined,
-    mkrInChief: isDefaultNetwork(network) ? prefetchedMkrInChief : data?.mkrInChief ?? undefined
+    skyInChief: isDefaultNetwork(network) ? prefetchedSkyInChief : data?.skyInChief ?? undefined
   };
 
   return <LandingPage {...props} />;
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-  const { proposals, polls, pollStats, pollTags, mkrOnHat, hat, mkrInChief } = await fetchLandingPageData(
+  const { proposals, polls, pollStats, pollTags, skyOnHat, hat, skyInChief } = await fetchLandingPageData(
     SupportedNetworks.MAINNET
   );
 
@@ -269,9 +278,9 @@ export const getStaticProps: GetStaticProps = async () => {
       polls,
       pollStats,
       pollTags,
-      mkrOnHat,
+      skyOnHat,
       hat,
-      mkrInChief
+      skyInChief
     }
   };
 };

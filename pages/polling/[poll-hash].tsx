@@ -196,13 +196,13 @@ const PollView = ({ poll }: { poll: Poll }) => {
                                 >
                                   <Heading sx={{ mb: 3 }}>Impact estimation tags</Heading>
                                   <Text sx={{ textAlign: 'center' }}>
-                                    GovAlpha applies impact estimations to active governance items (MIPs and
-                                    Signal Requests).
+                                    The Governance Facilitators apply impact estimations to active governance
+                                    items.
                                     <br />
                                     To know more about impact tags please visit the{' '}
                                     <ExternalLink
                                       title="Maker Operational Manual"
-                                      href="https://manual.makerdao.com/governance/off-chain/impact-estimations"
+                                      href="https://manual.makerdao.com/governance-processes/off-chain/impact-estimations"
                                     >
                                       <Text>Maker Operational Manual</Text>
                                     </ExternalLink>
@@ -288,9 +288,7 @@ const PollView = ({ poll }: { poll: Poll }) => {
                         <Text sx={{ color: 'textSecondary' }}>Total Voting Power</Text>
                         {tally ? (
                           <Text>
-                            {Number(
-                              formatEther(BigInt(tally.totalMkrParticipation.toString()))
-                            ).toLocaleString(undefined, {
+                            {Number(tally.totalSkyParticipation.toString()).toLocaleString(undefined, {
                               maximumFractionDigits: 3
                             })}{' '}
                             SKY
@@ -361,7 +359,7 @@ const PollView = ({ poll }: { poll: Poll }) => {
                 </div>
               ]}
               banner={
-                tally && (tally.totalMkrParticipation as number) > 0 && tally.winningOptionName ? (
+                tally && (tally.totalSkyParticipation as number) > 0 && tally.winningOptionName ? (
                   <Box>
                     <Divider my={0} />
                     <PollWinningOptionBox tally={tally} poll={poll} />

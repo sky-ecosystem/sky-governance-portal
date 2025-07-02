@@ -23,7 +23,8 @@ jobs:
 
       - run: pnpm test:ci
 
-      - name: Codecov
-        run: |
-          pnpm add -D codecov
-          ./node_modules/.bin/codecov
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: makerdao/sky-governance-portal

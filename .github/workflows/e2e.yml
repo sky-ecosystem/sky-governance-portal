@@ -18,13 +18,11 @@ jobs:
           - test: wallet.spec
     runs-on: ubuntu-latest
     env:
-      INFURA_KEY: ${{ secrets.INFURA_KEY }}
-      ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
       REDIS_URL: ${{ secrets.REDIS_URL }}
       USE_CACHE: true
       TENDERLY_API_KEY: ${{ secrets.TENDERLY_API_KEY }}
       DEFENDER_API_SECRET_TESTNET: $${{ secrets.DEFENDER_API_SECRET_TESTNET}}
-      DEFENDER_API_KEY_TESTNET: ${{ secrets.DEFENDER.API_KEY_TESTNET}}
+      DEFENDER_API_KEY_TESTNET: ${{ secrets.DEFENDER_API_KEY_TESTNET}}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
