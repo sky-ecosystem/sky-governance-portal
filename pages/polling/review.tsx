@@ -54,7 +54,7 @@ const PollingReview = ({ polls: activePolls, activePollIds, tags }: PollingRevie
     setShowMarkdownModal(!showMarkdownModal);
   };
 
-  const { ballot, previousBallot, transaction, ballotCount } = useContext(BallotContext);
+  const { ballot, previousBallot, transaction, ballotCount, close } = useContext(BallotContext);
 
   const { account } = useAccount();
 
@@ -183,7 +183,7 @@ const PollingReview = ({ polls: activePolls, activePollIds, tags }: PollingRevie
             <Stack gap={3}>
               <Box>
                 <InternalLink href={'/polling'} title="View polling page">
-                  <Button variant="mutedOutline" sx={{ width: 'max-content' }}>
+                  <Button variant="mutedOutline" sx={{ width: 'max-content' }} onClick={close}>
                     <Icon name="chevron_left" size={2} sx={{ mr: 2 }} />
                     Back to All Polls
                   </Button>
