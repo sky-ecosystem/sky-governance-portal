@@ -12,8 +12,8 @@ import { Delegate } from 'modules/delegates/types';
 import { StatBox } from 'modules/app/components/StatBox';
 import { useAccount } from 'modules/app/hooks/useAccount';
 import { formatValue } from 'lib/string';
-import { useSkyVotingWeight } from 'modules/sky/hooks/useSkyVotingWeight';
 import Skeleton from 'react-loading-skeleton';
+import { useLockedSky } from 'modules/sky/hooks/useLockedSky';
 
 export function DelegateSKYDelegatedStats({
   delegate,
@@ -27,9 +27,9 @@ export function DelegateSKYDelegatedStats({
 
   const { data: skyDelegatedData } = useSkyDelegatedByUser(account, delegate.voteDelegateAddress);
   const totalSkyDelegated = skyDelegatedData?.totalDelegationAmount;
-  const { data: votingWeight, loading: votingWeightLoading } = useSkyVotingWeight({
-    address: delegate.voteDelegateAddress
-  });
+  
+  const { data: totalLocked, loading: votingWeightLoading } = useLockedSky(delegate.voteDelegateAddress);
+  const votingWeight = totalLocked;
 
   return (
     <Flex
