@@ -446,6 +446,7 @@ export const BallotProvider = ({ children }: PropTypes): React.ReactElement => {
     setTxId(null);
     setStep('initial');
     setSubmissionMethod(null);
+    setSubmissionError(undefined);
   };
 
   useEffect(() => {

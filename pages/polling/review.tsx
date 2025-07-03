@@ -7,7 +7,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 import { GetStaticProps } from 'next';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useMemo, useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { Heading, Box, Button, Flex, Text } from 'theme-ui';
 import Icon from 'modules/app/components/Icon';
 import ErrorPage from 'modules/app/components/ErrorPage';
@@ -46,6 +47,7 @@ export type PollingReviewPageProps = {
 const PollingReview = ({ polls: activePolls, activePollIds, tags }: PollingReviewPageProps) => {
   const bpi = useBreakpointIndex();
   const network = useNetwork();
+  const router = useRouter();
 
   const [showMarkdownModal, setShowMarkdownModal] = useState(false);
   const [modalPollId, setModalPollId] = useState<number | undefined>(undefined);
@@ -54,9 +56,26 @@ const PollingReview = ({ polls: activePolls, activePollIds, tags }: PollingRevie
     setShowMarkdownModal(!showMarkdownModal);
   };
 
-  const { ballot, previousBallot, transaction, ballotCount } = useContext(BallotContext);
+  const { ballot, previousBallot, transaction, ballotCount, close } = useContext(BallotContext);
 
   const { account } = useAccount();
+
+  // Clear transaction state when navigating away from the review page
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      // If navigating away from review page, clear transaction state
+      if (!url.includes('/polling/review')) {
+        close();
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+
+    // Cleanup
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [router, close]);
 
   // Used to create a string that does not trigger the useMemo of votedPolls to be recreated. (Unique string does not re-render the votedPolls object)
   const ballotKeys = useMemo(() => {
