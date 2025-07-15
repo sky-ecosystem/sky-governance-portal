@@ -117,6 +117,15 @@ import { ApiError } from 'modules/app/api/ApiError';
  *         hasBeenScheduled: true
  *         skySupport: "150000.75"
  *         eta: "2023-10-28T12:00:00Z"
+ *   NotFoundResponse:
+ *     type: object
+ *     properties:
+ *       message:
+ *         type: string
+ *         description: Error message explaining why the proposal was not found
+ *       code:
+ *         type: integer
+ *         description: HTTP status code (404)
  *
  * /api/executive/{proposal-id}:
  *   get:
@@ -154,16 +163,6 @@ import { ApiError } from 'modules/app/api/ApiError';
  *           application/json:
  *             schema:
  *               $ref: '#/definitions/NotFoundResponse'
- * definitions:
- *   NotFoundResponse:
- *     type: object
- *     properties:
- *       message:
- *         type: string
- *         description: Error message explaining why the proposal was not found
- *       code:
- *         type: integer
- *         description: HTTP status code (404)
  */
 export default withApiHandler(
   async (req: NextApiRequest, res: NextApiResponse<ExecutiveProposalType | NotFoundResponse>) => {
