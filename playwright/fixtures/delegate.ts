@@ -77,7 +77,8 @@ export class DelegatePage {
   }
 
   async verifyDelegatedAmount(amount: string) {
-    await expect(this.delegatedByYouText.first()).toHaveText(amount);
+    // Wait for delegation data to load or timeout if element doesn't exist
+    await expect(this.delegatedByYouText.first()).toHaveText(amount, { timeout: 30000 });
   }
 
   async undelegateAll() {

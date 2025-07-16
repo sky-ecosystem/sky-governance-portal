@@ -178,8 +178,21 @@ export default withApiHandler(
       new ApiError('Invalid network', 400, 'Invalid network')
     ) as SupportedNetworks;
 
-    // TODO what kind of validation can we apply on the proposal-id?
-    const proposalId = req.query['proposal-id'] as string;
+    // Validate proposal-id format (kebab-case string or ethereum address)
+    const proposalId = validateQueryParam(
+      req.query['proposal-id'] as string,
+      'string',
+      { defaultValue: null },
+      (id: string) => {
+        if (!id || typeof id !== 'string') return false;
+        // Allow ethereum addresses (0x followed by 40 hex chars)
+        if (/^0x[a-fA-F0-9]{40}$/.test(id)) return true;
+        // Allow kebab-case strings (letters, numbers, hyphens, at least 3 chars)
+        if (/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id) && id.length >= 3) return true;
+        return false;
+      },
+      new ApiError('Invalid proposal-id format', 400, 'Proposal ID must be a valid ethereum address or kebab-case string')
+    ) as string;
 
     const response = await getExecutiveProposal(proposalId, network);
 
