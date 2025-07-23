@@ -76,7 +76,7 @@ const QuickVote = ({
       setChoice(null);
       setEditing(!hasVotedOnThisPollBefore);
     }
-  }, [addedChoice]);
+  }, [addedChoice, hasVotedOnThisPollBefore]);
 
   const submit = () => {
     invariant(isChoiceValid);
