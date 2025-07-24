@@ -307,8 +307,8 @@ export const BallotProvider = ({ children }: PropTypes): React.ReactElement => {
     onSuccess: () => {
       onMinedHandler();
     },
-    onError: (error: Error) => {
-      onErrorHandler(error.message);
+    onError: () => {
+      onErrorHandler('Something went wrong with your transaction.');
     }
   });
 
@@ -325,8 +325,8 @@ export const BallotProvider = ({ children }: PropTypes): React.ReactElement => {
     onSuccess: () => {
       onMinedHandler();
     },
-    onError: (error: Error) => {
-      onErrorHandler(error.message);
+    onError: () => {
+      onErrorHandler('Something went wrong with your transaction.');
     }
   });
 
