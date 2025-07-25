@@ -9,7 +9,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import React, { useState } from 'react';
 import { Box, Flex, Text, Close, ThemeUICSSObject } from 'theme-ui';
 import ConnectNetworkButton from 'modules/web3/components/ConnectNetworkButton';
-import { DialogContent, DialogOverlay } from '../../Dialog';
+import { DialogContent } from '../../Dialog';
+import { DialogOverlay } from '@reach/dialog';
 import { useChains, useClient, useSwitchChain } from 'wagmi';
 import Icon from 'modules/app/components/Icon';
 
@@ -79,7 +80,7 @@ const NetworkSelect = (): React.ReactElement => {
         activeNetwork={client?.chain.name || 'Ethereum'}
       />
 
-      <DialogOverlay isOpen={showDialog} onDismiss={close}>
+      <DialogOverlay isOpen={showDialog} onDismiss={close} sx={{ zIndex: 101 }}>
         <DialogContent ariaLabel="Change Network" widthDesktop="400px">
           <Flex sx={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Text variant="microHeading">Switch Network</Text>
