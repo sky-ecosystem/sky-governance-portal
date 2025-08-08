@@ -41,7 +41,7 @@ export async function parsePollMetadata(
     throw new Error(`Invalid poll parameters for poll ${poll.pollId}. ${errorParameters}`);
   }
 
-  const tags = getPollTags();
+  const tags = await getPollTags();
 
   const pollTags = tagsMapping[poll.pollId] || [];
 
