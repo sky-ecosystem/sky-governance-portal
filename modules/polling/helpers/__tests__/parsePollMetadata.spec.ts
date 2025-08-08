@@ -21,14 +21,16 @@ const pollMetadata327 = fs.readFileSync(__dirname + '/__helpers__/poll-327.md').
 const pollMetadata431 = fs.readFileSync(__dirname + '/__helpers__/poll-431.md').toString();
 describe('Parse poll metadata', () => {
   beforeAll(() => {
-    (getPollTags as Mock).mockReturnValue([
-      {
-        id: 'risk',
-        shortname: 'risk',
-        longname: 'risk',
-        description: 'risk'
-      }
-    ]);
+    (getPollTags as Mock).mockReturnValue(
+      Promise.resolve([
+        {
+          id: 'risk',
+          shortname: 'risk',
+          longname: 'risk',
+          description: 'risk'
+        }
+      ])
+    );
 
     (getPollTagsMapping as Mock).mockReturnValue(
       Promise.resolve({

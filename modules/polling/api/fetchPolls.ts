@@ -269,8 +269,11 @@ export function filterPollList(
   };
 }
 
-export function reducePollTags(pollList: PollListItem[], filteredPollList: PollListItem[]): TagCount[] {
-  const pollTags = getPollTags();
+export async function reducePollTags(
+  pollList: PollListItem[],
+  filteredPollList: PollListItem[]
+): Promise<TagCount[]> {
+  const pollTags = await getPollTags();
 
   const tags = pollList.reduce((acumTags, poll) => {
     const pollInFilteredPolls = filteredPollList.some(p => p.pollId === poll.pollId);
@@ -316,7 +319,7 @@ export async function getPollsPaginated({
   const pollList = await getPollList(network);
   const pollFilters = { pageSize, page, title, orderBy, tags, status, type, startDate, endDate };
   const filteredPollList = filterPollList(pollList, pollFilters);
-  const pollTags = reducePollTags(pollList, filteredPollList.polls);
+  const pollTags = await reducePollTags(pollList, filteredPollList.polls);
 
   return {
     ...filteredPollList,

@@ -61,7 +61,7 @@ export async function fetchSinglePoll(
   const { content } = matterWrapper(pollMdDoc);
   const html = await markdownToHtml(content);
 
-  const pollTags = getPollTags();
+  const pollTags = await getPollTags();
   const prevSlug = pollList[pollInListIndex - 1]?.slug;
   const nextSlug = pollList[pollInListIndex + 1]?.slug;
 
