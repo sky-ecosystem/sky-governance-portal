@@ -17,7 +17,9 @@ import {
   githubExecutivesCacheKey,
   executiveProposalsCacheKey,
   pollListCacheKey,
-  partialActivePollsCacheKey
+  partialActivePollsCacheKey,
+  pollTagsDefinitionJSONCacheKey,
+  pollTagsMappingJSONCacheKey
 } from 'modules/cache/constants/cache-keys';
 import { config } from 'lib/config';
 import { ApiError } from 'modules/app/api/ApiError';
@@ -39,7 +41,13 @@ export default withApiHandler(
       new ApiError('Invalid network', 400, 'Invalid network')
     ) as SupportedNetworks;
 
-    const pollsAllowedCacheKeys = ['parsed-tally-', pollListCacheKey, partialActivePollsCacheKey];
+    const pollsAllowedCacheKeys = [
+      'parsed-tally-',
+      pollListCacheKey,
+      partialActivePollsCacheKey,
+      pollTagsDefinitionJSONCacheKey,
+      pollTagsMappingJSONCacheKey
+    ];
 
     // Allowed cache keys to be deleted, they can be partial since we just check that the key is on the requested path.
     const allowedCacheKeys = [
