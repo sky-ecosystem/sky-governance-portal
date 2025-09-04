@@ -29,6 +29,7 @@ import DelegatedByAddress from 'modules/delegates/components/DelegatedByAddress'
 import { useAccount } from 'modules/app/hooks/useAccount';
 import { Address } from 'modules/address/components/Address';
 import { formatDelegationHistory } from '../helpers/formatDelegationHistory';
+import { formatCurrentDelegations } from '../helpers/formatCurrentDelegations';
 import { InternalLink } from 'modules/app/components/InternalLink';
 import EtherscanLink from 'modules/web3/components/EtherscanLink';
 import { useNetwork } from 'modules/app/hooks/useNetwork';
@@ -53,7 +54,11 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
 
   const { data: totalStaked } = useLockedSky(delegate.voteDelegateAddress);
   const { voteDelegateContractAddress } = useAccount();
-  const delegationHistory = formatDelegationHistory(delegate.skyLockedDelegate);
+  
+  // Use new delegations data if available, otherwise fall back to old delegation history
+  const delegationHistory = delegate.delegations 
+    ? formatCurrentDelegations(delegate.delegations)
+    : formatDelegationHistory(delegate.skyLockedDelegate);
 
   const activeDelegators = delegationHistory.filter(({ lockAmount }) => parseEther(lockAmount) > 0n);
   const delegatorCount = activeDelegators.length;
@@ -77,7 +82,11 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
       {delegationHistory.length > 0 && totalStaked ? (
         <>
           <Box sx={{ pl: [3, 4], pr: [3, 4], py: [3, 4] }}>
-            <DelegatedByAddress delegators={delegationHistory} totalDelegated={totalStaked} />
+            <DelegatedByAddress 
+              delegators={delegationHistory} 
+              totalDelegated={totalStaked}
+              delegateAddress={delegate.voteDelegateAddress} 
+            />
           </Box>
           <Divider />
 

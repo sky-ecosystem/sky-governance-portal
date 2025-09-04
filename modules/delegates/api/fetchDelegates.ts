@@ -66,6 +66,7 @@ function mergeDelegateInfo({
     proposalsSupported: onChainDelegate.proposalsSupported,
     execSupported: undefined,
     skyLockedDelegate: onChainDelegate.skyLockedDelegate,
+    delegations: onChainDelegate.delegations, // Include current delegations from subgraph
     blockTimestamp: onChainDelegate.blockTimestamp
   };
 }

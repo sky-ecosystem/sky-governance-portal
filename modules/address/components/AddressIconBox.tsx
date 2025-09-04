@@ -29,6 +29,17 @@ export default function AddressIconBox({
   width = 41,
   limitTextLength = 0
 }: PropTypes): React.ReactElement {
+  // Early return if address is not provided to prevent toLowerCase errors
+  if (!address) {
+    return (
+      <Flex>
+        <Flex sx={{ minWidth: width, mr: 2, alignItems: 'center' }}>
+          <Text sx={{ fontSize: 1, color: 'textMuted' }}>Invalid address</Text>
+        </Flex>
+      </Flex>
+    );
+  }
+
   const network = useNetwork();
 
   const { account, voteDelegateContractAddress } = useAccount();
@@ -36,8 +47,8 @@ export default function AddressIconBox({
   // isOwner if the delegateAddress registered in the comment is the same one from the current user
   // isOwner also if the address is equal to the current account address
   const isOwner =
-    (delegate && delegate.voteDelegateAddress.toLowerCase() === voteDelegateContractAddress?.toLowerCase()) ||
-    address.toLowerCase() === account?.toLowerCase();
+    (delegate && delegate.voteDelegateAddress?.toLowerCase() === voteDelegateContractAddress?.toLowerCase()) ||
+    (address && account && address.toLowerCase() === account.toLowerCase());
 
   return (
     <Flex>

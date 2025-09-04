@@ -17,15 +17,18 @@ import { DelegationHistory } from 'modules/delegates/types';
 import { formatDateWithTime } from 'lib/datetime';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { formatValue } from 'lib/string';
-import { parseEther } from 'viem';
+import { parseEther, formatEther } from 'viem';
 import AddressIconBox from 'modules/address/components/AddressIconBox';
 import EtherscanLink from 'modules/web3/components/EtherscanLink';
 import { useNetwork } from 'modules/app/hooks/useNetwork';
 import { calculatePercentage } from 'lib/utils';
+import { fetchJson } from 'lib/fetchJson';
+import useSWR from 'swr';
 
 type DelegatedByAddressProps = {
   delegators: DelegationHistory[];
   totalDelegated: bigint;
+  delegateAddress?: string; // Optional for backwards compatibility, used for lazy-loading
 };
 
 type CollapsableRowProps = {
@@ -33,6 +36,7 @@ type CollapsableRowProps = {
   network: SupportedNetworks;
   bpi: number;
   totalDelegated: bigint;
+  delegateAddress?: string; // Optional for backwards compatibility
 };
 
 const formatTotalDelegated = (num: bigint, denom: bigint): string => {
@@ -43,10 +47,37 @@ const formatTotalDelegated = (num: bigint, denom: bigint): string => {
   }
 };
 
-const CollapsableRow = ({ delegator, network, bpi, totalDelegated }: CollapsableRowProps) => {
+const CollapsableRow = ({ delegator, network, bpi, totalDelegated, delegateAddress }: CollapsableRowProps) => {
   const [expanded, setExpanded] = useState(false);
   const { address, lockAmount, events } = delegator;
-  const sortedEvents = events.sort((prev, next) => (prev.blockTimestamp > next.blockTimestamp ? -1 : 1));
+  
+  // Lazy-load delegation history when delegateAddress is provided
+  const shouldFetchHistory = expanded && delegateAddress && (!events || events.length === 0);
+  const historyApiUrl = shouldFetchHistory 
+    ? `/api/delegates/${delegateAddress}/delegator/${address}/history?network=${network}`
+    : null;
+  
+  const { data: historyData, error: historyError } = useSWR(
+    historyApiUrl,
+    fetchJson,
+    {
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false
+    }
+  );
+  
+  // Use lazy-loaded history if available, otherwise use pre-loaded events
+  const actualEvents = historyData?.delegationHistory 
+    ? historyData.delegationHistory.map(event => ({
+        lockAmount: formatEther(BigInt(event.amount)), // Convert wei to ether format
+        blockTimestamp: new Date(parseInt(event.timestamp) * 1000).toISOString(),
+        hash: event.txnHash,
+        isStakingEngine: event.isStakingEngine
+      }))
+    : events || [];
+  
+  const sortedEvents = actualEvents.sort((prev, next) => (prev.blockTimestamp > next.blockTimestamp ? -1 : 1));
   return (
     <tr>
       <Flex as="td" sx={{ flexDirection: 'column', mb: [0, 3], pt: ['10px', 0], mr: 2 }}>
@@ -61,20 +92,30 @@ const CollapsableRow = ({ delegator, network, bpi, totalDelegated }: Collapsable
         </Heading>
         {expanded && (
           <Flex sx={{ pl: 3, flexDirection: 'column' }}>
-            {sortedEvents.map(({ blockTimestamp }) => {
-              return (
-                <Text
-                  key={blockTimestamp}
-                  variant="smallCaps"
-                  sx={{
-                    ':first-of-type': { pt: 2 },
-                    ':not(:last-of-type)': { pb: 2 }
-                  }}
-                >
-                  {formatDateWithTime(blockTimestamp)}
-                </Text>
-              );
-            })}
+            {shouldFetchHistory && !historyData && !historyError ? (
+              <Text variant="smallCaps" sx={{ pt: 2, pb: 2 }}>
+                Loading delegation history...
+              </Text>
+            ) : historyError ? (
+              <Text variant="smallCaps" sx={{ pt: 2, pb: 2, color: 'bear' }}>
+                Error loading delegation history
+              </Text>
+            ) : (
+              sortedEvents.map(({ blockTimestamp }) => {
+                return (
+                  <Text
+                    key={blockTimestamp}
+                    variant="smallCaps"
+                    sx={{
+                      ':first-of-type': { pt: 2 },
+                      ':not(:last-of-type)': { pb: 2 }
+                    }}
+                  >
+                    {formatDateWithTime(blockTimestamp)}
+                  </Text>
+                );
+              })
+            )}
           </Flex>
         )}
       </Flex>
@@ -85,33 +126,43 @@ const CollapsableRow = ({ delegator, network, bpi, totalDelegated }: Collapsable
         </Text>
         {expanded && (
           <Flex sx={{ flexDirection: 'column' }}>
-            {sortedEvents.map(({ blockTimestamp, lockAmount, isStakingEngine }) => {
-              return (
-                <Flex
-                  key={blockTimestamp}
-                  sx={{
-                    alignItems: 'center',
-                    ':first-of-type': { pt: 3 },
-                    ':not(:last-of-type)': { pb: 2 }
-                  }}
-                >
-                  {lockAmount.indexOf('-') === 0 ? (
-                    <Icon name="decrease" size={2} color="bear" />
-                  ) : (
-                    <Icon name="increase" size={2} color="bull" />
-                  )}
-                  <Text key={blockTimestamp} variant="smallCaps" sx={{ pl: 2 }}>
-                    {`${formatValue(
-                      parseEther(lockAmount.indexOf('-') === 0 ? lockAmount.substring(1) : lockAmount),
-                      'wad'
-                    )}${bpi > 0 ? ' SKY' : ''}`}
-                  </Text>
-                  <Text key={blockTimestamp} variant="smallCaps" sx={{ pl: 2 }}>
-                    {isStakingEngine ? '(Staking)' : ''}
-                  </Text>
-                </Flex>
-              );
-            })}
+            {shouldFetchHistory && !historyData && !historyError ? (
+              <Text variant="smallCaps" sx={{ pt: 3, pb: 2 }}>
+                Loading...
+              </Text>
+            ) : historyError ? (
+              <Text variant="smallCaps" sx={{ pt: 3, pb: 2, color: 'bear' }}>
+                Error loading amounts
+              </Text>
+            ) : (
+              sortedEvents.map(({ blockTimestamp, lockAmount, isStakingEngine }) => {
+                return (
+                  <Flex
+                    key={blockTimestamp}
+                    sx={{
+                      alignItems: 'center',
+                      ':first-of-type': { pt: 3 },
+                      ':not(:last-of-type)': { pb: 2 }
+                    }}
+                  >
+                    {lockAmount.indexOf('-') === 0 ? (
+                      <Icon name="decrease" size={2} color="bear" />
+                    ) : (
+                      <Icon name="increase" size={2} color="bull" />
+                    )}
+                    <Text key={blockTimestamp} variant="smallCaps" sx={{ pl: 2 }}>
+                      {`${formatValue(
+                        parseEther(lockAmount.indexOf('-') === 0 ? lockAmount.substring(1) : lockAmount),
+                        'wad'
+                      )}${bpi > 0 ? ' SKY' : ''}`}
+                    </Text>
+                    <Text key={blockTimestamp} variant="smallCaps" sx={{ pl: 2 }}>
+                      {isStakingEngine ? '(Staking)' : ''}
+                    </Text>
+                  </Flex>
+                );
+              })
+            )}
           </Flex>
         )}
       </Box>
@@ -148,21 +199,31 @@ const CollapsableRow = ({ delegator, network, bpi, totalDelegated }: Collapsable
         </Box>
         {expanded && (
           <Flex sx={{ flexDirection: 'column' }}>
-            {sortedEvents.map(({ blockTimestamp, hash }) => {
-              return (
-                <Flex
-                  key={blockTimestamp}
-                  sx={{
-                    justifyContent: 'flex-end',
-                    lineHeight: '20px',
-                    fontSize: 1,
-                    ':not(:last-of-type)': { pb: 2 }
-                  }}
-                >
-                  <EtherscanLink type="transaction" network={network} hash={hash as string} prefix="" />
-                </Flex>
-              );
-            })}
+            {shouldFetchHistory && !historyData && !historyError ? (
+              <Text variant="smallCaps" sx={{ pt: 2, pb: 2, textAlign: 'right' }}>
+                Loading...
+              </Text>
+            ) : historyError ? (
+              <Text variant="smallCaps" sx={{ pt: 2, pb: 2, color: 'bear', textAlign: 'right' }}>
+                Error
+              </Text>
+            ) : (
+              sortedEvents.map(({ blockTimestamp, hash }) => {
+                return (
+                  <Flex
+                    key={blockTimestamp}
+                    sx={{
+                      justifyContent: 'flex-end',
+                      lineHeight: '20px',
+                      fontSize: 1,
+                      ':not(:last-of-type)': { pb: 2 }
+                    }}
+                  >
+                    <EtherscanLink type="transaction" network={network} hash={hash as string} prefix="" />
+                  </Flex>
+                );
+              })
+            )}
           </Flex>
         )}
       </Box>
@@ -170,7 +231,7 @@ const CollapsableRow = ({ delegator, network, bpi, totalDelegated }: Collapsable
   );
 };
 
-const DelegatedByAddress = ({ delegators, totalDelegated }: DelegatedByAddressProps): JSX.Element => {
+const DelegatedByAddress = ({ delegators, totalDelegated, delegateAddress }: DelegatedByAddressProps): JSX.Element => {
   const bpi = useBreakpointIndex();
   const network = useNetwork();
 
@@ -303,6 +364,7 @@ const DelegatedByAddress = ({ delegators, totalDelegated }: DelegatedByAddressPr
                 network={network}
                 bpi={bpi}
                 totalDelegated={totalDelegated}
+                delegateAddress={delegateAddress}
               />
             ))
           ) : (
