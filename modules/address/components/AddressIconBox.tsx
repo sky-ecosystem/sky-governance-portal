@@ -29,6 +29,11 @@ export default function AddressIconBox({
   width = 41,
   limitTextLength = 0
 }: PropTypes): React.ReactElement {
+  const network = useNetwork();
+
+  const { account, voteDelegateContractAddress } = useAccount();
+  const { data: delegate } = useSingleDelegateInfo(address);
+
   // Early return if address is not provided to prevent toLowerCase errors
   if (!address) {
     return (
@@ -39,11 +44,6 @@ export default function AddressIconBox({
       </Flex>
     );
   }
-
-  const network = useNetwork();
-
-  const { account, voteDelegateContractAddress } = useAccount();
-  const { data: delegate } = useSingleDelegateInfo(address);
   // isOwner if the delegateAddress registered in the comment is the same one from the current user
   // isOwner also if the address is equal to the current account address
   const isOwner =
