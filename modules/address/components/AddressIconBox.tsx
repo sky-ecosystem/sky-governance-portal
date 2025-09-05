@@ -47,7 +47,8 @@ export default function AddressIconBox({
   // isOwner if the delegateAddress registered in the comment is the same one from the current user
   // isOwner also if the address is equal to the current account address
   const isOwner =
-    (delegate && delegate.voteDelegateAddress?.toLowerCase() === voteDelegateContractAddress?.toLowerCase()) ||
+    (delegate &&
+      delegate.voteDelegateAddress?.toLowerCase() === voteDelegateContractAddress?.toLowerCase()) ||
     (address && account && address.toLowerCase() === account.toLowerCase());
 
   return (

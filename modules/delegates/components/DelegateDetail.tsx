@@ -54,9 +54,9 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
 
   const { data: totalStaked } = useLockedSky(delegate.voteDelegateAddress);
   const { voteDelegateContractAddress } = useAccount();
-  
+
   // Use new delegations data if available, otherwise fall back to old delegation history
-  const delegationHistory = delegate.delegations 
+  const delegationHistory = delegate.delegations
     ? formatCurrentDelegations(delegate.delegations)
     : formatDelegationHistory(delegate.skyLockedDelegate);
 
@@ -82,10 +82,10 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
       {delegationHistory.length > 0 && totalStaked ? (
         <>
           <Box sx={{ pl: [3, 4], pr: [3, 4], py: [3, 4] }}>
-            <DelegatedByAddress 
-              delegators={delegationHistory} 
+            <DelegatedByAddress
+              delegators={delegationHistory}
               totalDelegated={totalStaked}
-              delegateAddress={delegate.voteDelegateAddress} 
+              delegateAddress={delegate.voteDelegateAddress}
             />
           </Box>
           <Divider />
