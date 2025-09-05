@@ -4,8 +4,8 @@
     "shortname": "High Impact",
     "longname": "High Impact",
     "recommend_ui": true,
-    "description": "Polls that the Governance Facilitators have judged high-impact",
-    "related_link": "https://forum.makerdao.com/t/introducing-impact-estimations/14267",
+    "description": "Polls that the Governance Facilitators have judged high impact",
+    "related_link": "https://forum.sky.money/t/introducing-impact-estimations/14267",
     "precedence": 1
   },
   {
@@ -13,7 +13,7 @@
     "shortname": "Parameter",
     "longname": "Risk Parameter",
     "recommend_ui": true,
-    "description": "Polls that change risk parameters within the Maker Protocol",
+    "description": "Polls that change risk parameters within the Sky Protocol or its Stars",
     "precedence": 2
   },
   {
@@ -21,42 +21,43 @@
     "shortname": "Tech",
     "longname": "Technical",
     "recommend_ui": true,
-    "description": "Polls relating to technical changes to the Maker Protocol",
+    "description": "Polls relating to technical changes to the Sky Protocol or its Stars",
     "precedence": 3
   },
   {
-    "id": "mips",
-    "shortname": "MIP",
-    "longname": "MIP",
+    "id": "weekly",
+    "shortname": "Weekly",
+    "longname": "Weekly Atlas Edit",
     "recommend_ui": true,
-    "description": "Polls related to the Maker Improvement Proposal Process defined in MIP0",
-    "related_link": "https://mips.makerdao.com/mips/details/MIP0",
+    "description": "Polls relating to Atlas Edit Weekly Cycle Proposals",
+    "related_link": "https://sky-atlas.powerhouse.io/A.1.10.2_Atlas_Edit_Weekly_Cycle/4a8ad9ad-5c5d-4994-9b46-f04c0e61ce59|0db30308",
     "precedence": 4
+  },
+  {
+    "id": "monthly",
+    "shortname": "Monthly",
+    "longname": "Monthly Atlas Edit",
+    "recommend_ui": true,
+    "description": "Polls relating to Atlas Edit Proposals (AEPs) through the Atlas Edit Monthly Cycle",
+    "related_link": "https://sky-atlas.powerhouse.io/A.1.11.2_Atlas_Edit_Monthly_Cycle/430185a5-fa5d-4664-89cf-21c9e6cfc109|0db3326e",
+    "precedence": 5
   },
   {
     "id": "spark",
     "shortname": "Spark",
-    "longname": "Spark Protocol",
+    "longname": "Spark Star",
     "recommend_ui": true,
-    "description": "Polls related to the Spark Protocol",
-    "related_link": "https://www.sparkprotocol.io/",
-    "precedence": 5
-  },
-  {
-    "id": "core-unit-onboard",
-    "shortname": "CU On",
-    "longname": "Core Unit Onboarding",
-    "recommend_ui": true,
-    "description": "Proposals to onboard new Core Units into MakerDAO",
-    "related_link": "https://mips.makerdao.com/mips/details/MIP39",
+    "description": "Polls relating to the Spark Star",
+    "related_link": "https://spark.fi/",
     "precedence": 6
   },
   {
-    "id": "core-unit-offboard",
-    "shortname": "CU Off",
-    "longname": "Core Unit Offboarding",
+    "id": "grove",
+    "shortname": "Grove",
+    "longname": "Grove Star",
     "recommend_ui": true,
-    "description": "Proposals to offboard Core Units from MakerDAO",
+    "description": "Polls relating to the Grove Star",
+    "related_link": "https://www.grove.finance/",
     "precedence": 7
   },
   {
@@ -64,8 +65,7 @@
     "shortname": "Collateral On",
     "longname": "Collateral Onboarding",
     "recommend_ui": true,
-    "description": "Polls relating to the onboarding of collateral into the Maker Protocol",
-    "related_link": "https://collateral.makerdao.com/",
+    "description": "Polls relating to the onboarding of collateral into the Sky Protocol or its Stars",
     "precedence": 8
   },
   {
@@ -73,34 +73,25 @@
     "shortname": "Oracle",
     "longname": "Oracle",
     "recommend_ui": true,
-    "description": "Polls concerning MakerDAO's Oracles",
+    "description": "Polls concerning Oracles used by the Sky Protocol or its Stars",
     "precedence": 9
-  },
-  {
-    "id": "budget",
-    "shortname": "Budget",
-    "longname": "Budget",
-    "recommend_ui": true,
-    "description": "Budget proposals made by MakerDAO's Core Units",
-    "related_link": "https://mips.makerdao.com/mips/details/MIP40",
-    "precedence": 10
   },
   {
     "id": "medium-impact",
     "shortname": "Med Impact",
     "longname": "Medium Impact",
     "recommend_ui": true,
-    "description": "Polls that the Governance Facilitators have judged medium-impact",
-    "related_link": "https://forum.makerdao.com/t/introducing-impact-estimations/14267",
-    "precedence": 11
+    "description": "Polls that the Governance Facilitators have judged medium impact",
+    "related_link": "https://forum.sky.money/t/introducing-impact-estimations/14267",
+    "precedence": 10
   },
   {
     "id": "real-world-assets",
     "shortname": "RWA",
     "longname": "Real World Asset",
     "recommend_ui": true,
-    "description": "Polls relating to Real World Assets in the Maker Protocol",
-    "precedence": 12
+    "description": "Polls relating to Real World Assets in the Sky Protocol or its Stars",
+    "precedence": 11
   },
   {
     "id": "surplus",
@@ -108,69 +99,67 @@
     "longname": "System Surplus",
     "recommend_ui": true,
     "description": "Changes to the System Surplus Buffer",
-    "related_link": "https://manual.makerdao.com/parameter-index/core/param-system-surplus-buffer",
-    "precedence": 13
-  },
-  {
-    "id": "greenlight",
-    "shortname": "Greenlight",
-    "longname": "Greenlight",
-    "recommend_ui": true,
-    "description": "Polls relating to the collateral application greenlight process",
-    "related_link": "https://mips.makerdao.com/mips/details/MIP9",
-    "precedence": 14
+    "related_link": "https://sky-atlas.powerhouse.io/A.3.6.1_Surplus_Buffer/11af2ff0-8d73-806a-afb0-ca38393197d3|57ea2c54",
+    "precedence": 12
   },
   {
     "id": "bridge",
     "shortname": "Bridge",
     "longname": "Multi-Chain Bridge",
     "recommend_ui": true,
-    "description": "Polls relating to the bridging of DAI and the Maker Protocol to other chains",
-    "precedence": 15
+    "description": "Polls relating to the bridging of USDS, SKY, and/or the Sky Protocol or its Stars to other chains",
+    "precedence": 13
   },
   {
     "id": "low-impact",
     "shortname": "Low Impact",
     "longname": "Low Impact",
     "recommend_ui": true,
-    "description": "Polls that the Governance Facilitators have judged low-impact",
-    "related_link": "https://forum.makerdao.com/t/introducing-impact-estimations/14267",
-    "precedence": 16
+    "description": "Polls that the Governance Facilitators have judged low impact",
+    "related_link": "https://forum.sky.money/t/introducing-impact-estimations/14267",
+    "precedence": 14
   },
   {
     "id": "collateral-offboard",
     "shortname": "Collateral Off",
     "longname": "Collateral Offboarding",
     "recommend_ui": true,
-    "description": "Polls relating to the offboarding of collateral into the Maker Protocol",
-    "related_link": "https://mips.makerdao.com/mips/details/MIP62",
-    "precedence": 17
+    "description": "Polls relating to the offboarding of collateral from the Sky Protocol or its Stars",
+    "precedence": 15
+  },
+  {
+    "id": "dao-resolution",
+    "shortname": "DAO Resolution",
+    "longname": "DAO Resolution",
+    "recommend_ui": true,
+    "description": "Polls relating to DAO Resolutions for agreements relating to the Sky Protocol or its Stars",
+    "precedence": 16
   },
   {
     "id": "delegates",
     "shortname": "Delegates",
     "longname": "Delegates",
     "recommend_ui": true,
-    "description": "Polls relating to MakerDAO's Recognized Delegates",
-    "related_link": "https://manual.makerdao.com/governance/what-is-delegation",
-    "precedence": 18
-  },
-  {
-    "id": "momc",
-    "shortname": "MOMC",
-    "longname": "MakerDAO Open Market Committee",
-    "recommend_ui": true,
-    "description": "Proposals made by the MakerDAO Open Market Committee",
-    "related_link": "https://forum.makerdao.com/tag/ppg-omc-001",
-    "precedence": 19
+    "description": "Polls relating to Sky Protocol's Aligned Delegates",
+    "related_link": "https://sky-atlas.powerhouse.io/A.1.5_Aligned_Delegates/4addc93d-996d-408e-9750-b9c39743af4e|0db3",
+    "precedence": 17
   },
   {
     "id": "auctions",
     "shortname": "Auction",
     "longname": "Auction",
     "recommend_ui": true,
-    "description": "Polls related to auctions and auction parameters in the Maker Protocol",
-    "precedence": 20
+    "description": "Polls relating to auctions and auction parameters in the Sky Protocol or its Stars",
+    "precedence": 18
+  },
+  {
+    "id": "ssr",
+    "shortname": "SSR",
+    "longname": "Sky Savings Rate",
+    "recommend_ui": true,
+    "description": "Polls affecting the Sky Savings Rate",
+    "related_link": "https://sky-atlas.powerhouse.io/A.3.2.2.2_Sky_Savings_Rate/73d91126-21c9-4e8a-bedf-8a51a432bb59|57eab733e951",
+    "precedence": 19
   },
   {
     "id": "dsr",
@@ -178,107 +167,48 @@
     "longname": "Dai Savings Rate",
     "recommend_ui": true,
     "description": "Polls affecting the Dai Savings Rate",
-    "related_link": "https://manual.makerdao.com/parameter-index/core/param-dai-savings-rate",
-    "precedence": 21
+    "related_link": "https://sky-atlas.powerhouse.io/A.3.2.2.4_Dai_Savings_Rate/8e289e71-7ec5-4ce5-8d4d-41aab7a50f53|57eab733e951",
+    "precedence": 20
   },
   {
-    "id": "d3m",
-    "shortname": "D3M",
-    "longname": "DAI Direct Deposit Module",
+    "id": "ddm",
+    "shortname": "DDM",
+    "longname": "Direct Deposit Module",
     "recommend_ui": true,
-    "description": "Polls relating to changes or onboarding of DAI Direct Deposit Modules",
-    "related_link": "https://manual.makerdao.com/module-index/module-dai-direct-deposit",
-    "precedence": 22
+    "description": "Polls relating to changes to, or onboarding of, Direct Deposit Modules in the Sky Protocol or its Stars",
+    "precedence": 21
   },
   {
     "id": "psm",
     "shortname": "PSM",
     "longname": "Peg Stability Module",
     "recommend_ui": true,
-    "description": "Polls relating to changes or onboarding of Peg Stability Modules",
-    "related_link": "https://manual.makerdao.com/module-index/module-psm",
-    "precedence": 23
+    "description": "Polls relating to changes to, or onboarding of, Peg Stability Modules in the Sky Protocol or its Stars",
+    "related_link": "https://sky-atlas.powerhouse.io/A.3.4.2.7.1_Peg_Stability_Module/1b2f2ff0-8d73-80f4-a8bf-e0a9e05f52a3|57eaaad19a16b74d",
+    "precedence": 22
   },
   {
     "id": "misc-funding",
     "shortname": "Misc Fund",
     "longname": "Misc Funding",
     "recommend_ui": true,
-    "description": "Polls related to miscellaneous funding proposals",
-    "precedence": 24
+    "description": "Polls relating to miscellaneous funding proposals",
+    "precedence": 23
   },
   {
     "id": "misc-governance",
     "shortname": "Misc Gov",
     "longname": "Misc Governance",
     "recommend_ui": true,
-    "description": "Miscellaneous Polls related to Governance",
-    "precedence": 25
-  },
-  {
-    "id": "oracle-whitelist",
-    "shortname": "ORA Whitelist",
-    "longname": "Oracle Whitelist",
-    "recommend_ui": true,
-    "description": "Oracle Whitelist proposals",
-    "precedence": 26
-  },
-  {
-    "id": "oracle-feed",
-    "shortname": "ORA Feed",
-    "longname": "Oracle Feed",
-    "recommend_ui": true,
-    "description": "Oracle Feed Onboarding and Offboarding",
-    "precedence": 27
-  },
-  {
-    "id": "ratification",
-    "shortname": "Ratification",
-    "longname": "Ratification Poll",
-    "recommend_ui": true,
-    "description": "Ratification Polls as defined in MIP51",
-    "related_link": "https://mips.makerdao.com/mips/details/MIP51#MIP51c2",
-    "precedence": 28
+    "description": "Miscellaneous Polls relating to Governance",
+    "precedence": 24
   },
   {
     "id": "endgame",
     "shortname": "Endgame",
     "longname": "Endgame",
     "recommend_ui": true,
-    "description": "Polls related to the Endgame Plan",
-    "precedence": 29
-  },
-  {
-    "id": "black-thursday",
-    "shortname": "Black Thu",
-    "longname": "Black Thursday",
-    "recommend_ui": true,
-    "description": "Polls relating to Black Thursday",
-    "precedence": 30
-  },
-  {
-    "id": "inclusion",
-    "shortname": "Inclusion",
-    "longname": "Inclusion Poll",
-    "recommend_ui": false,
-    "description": "Inclusion Polls as defined in MIP3 (obsolete)",
-    "related_link": "https://mips.makerdao.com/mips/details/MIP3",
-    "precedence": 31
-  },
-  {
-    "id": "mcd-launch",
-    "shortname": "MCD Launch",
-    "longname": "Multi-Collateral DAI Launch",
-    "recommend_ui": false,
-    "description": "Polls relating to the launch of Multi-Collateral DAI",
-    "precedence": 32
-  },
-  {
-    "id": "prioritization-sentiment",
-    "shortname": "Priority Sentiment",
-    "longname": "Prioritization Sentiment",
-    "recommend_ui": true,
-    "description": "Polls that seek input on prioritization sentiment from MKR holders",
-    "precedence": 33
+    "description": "Polls relating to the Endgame Plan",
+    "precedence": 25
   }
 ]

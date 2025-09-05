@@ -33,11 +33,23 @@ export default function AddressIconBox({
 
   const { account, voteDelegateContractAddress } = useAccount();
   const { data: delegate } = useSingleDelegateInfo(address);
+
+  // Early return if address is not provided to prevent toLowerCase errors
+  if (!address) {
+    return (
+      <Flex>
+        <Flex sx={{ minWidth: width, mr: 2, alignItems: 'center' }}>
+          <Text sx={{ fontSize: 1, color: 'textMuted' }}>Invalid address</Text>
+        </Flex>
+      </Flex>
+    );
+  }
   // isOwner if the delegateAddress registered in the comment is the same one from the current user
   // isOwner also if the address is equal to the current account address
   const isOwner =
-    (delegate && delegate.voteDelegateAddress.toLowerCase() === voteDelegateContractAddress?.toLowerCase()) ||
-    address.toLowerCase() === account?.toLowerCase();
+    (delegate &&
+      delegate.voteDelegateAddress?.toLowerCase() === voteDelegateContractAddress?.toLowerCase()) ||
+    (address && account && address.toLowerCase() === account.toLowerCase());
 
   return (
     <Flex>
