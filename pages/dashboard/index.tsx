@@ -20,7 +20,9 @@ import {
   githubExecutivesCacheKey,
   executiveProposalsCacheKey,
   pollListCacheKey,
-  partialActivePollsCacheKey
+  partialActivePollsCacheKey,
+  pollTagsDefinitionJSONCacheKey,
+  pollTagsMappingJSONCacheKey
 } from 'modules/cache/constants/cache-keys';
 import { invalidateCache } from 'modules/cache/invalidateCache';
 import { toast } from 'react-toastify';
@@ -123,6 +125,8 @@ const DashboardPage = (): React.ReactElement => {
                   <Box sx={{ m: 3 }}>
                     <Button
                       onClick={() => {
+                        invalidate(pollTagsDefinitionJSONCacheKey);
+                        invalidate(pollTagsMappingJSONCacheKey);
                         invalidate(pollListCacheKey);
                         invalidate(partialActivePollsCacheKey);
                       }}
