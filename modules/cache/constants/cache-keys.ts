@@ -46,6 +46,7 @@ export const partialActivePollsCacheKey = 'partial-active-polls';
 export const pollDetailsCacheKey = 'poll-details';
 
 export const pollTagsMappingJSONCacheKey = 'poll-tags-mapping';
+export const pollTagsDefinitionJSONCacheKey = 'poll-tags-definition';
 
 export const getRecentlyUsedGaslessVotingKey = (address: string): string =>
   `recently-used-gasless-voting-${address.toLowerCase()}`;
