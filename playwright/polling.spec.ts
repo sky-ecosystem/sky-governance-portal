@@ -48,6 +48,7 @@ test('Adds polls to review and navigates to review page and votes with the legac
   });
 
   await test.step('connect wallet', async () => {
+    await page.waitForTimeout(2000);
     await connectWallet(page);
   });
 
