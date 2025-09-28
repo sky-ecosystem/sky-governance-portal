@@ -9,7 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import useSWR from 'swr';
 import { useChainId } from 'wagmi';
 import { chainIdToNetworkName } from 'modules/web3/helpers/chain';
-import { fetchDelegationEventsByAddresses } from 'modules/delegates/api/fetchDelegationEventsByAddresses';
+import { fetchDelegationEventsByUser } from 'modules/delegates/api/fetchDelegationEventsByUser';
 import { config } from 'lib/config';
 import { getPublicClient } from 'modules/web3/helpers/getPublicClient';
 import { voteDelegateAbi } from 'modules/contracts/ethers/abis';
@@ -70,8 +70,8 @@ export const useSkyDelegatedByUser = (
         return fetchFromChain(userAddress as string, voteDelegateAddress);
       }
       try {
-        const data = await fetchDelegationEventsByAddresses([voteDelegateAddress], network);
-        const delegations = data.filter(x => x.immediateCaller.toLowerCase() === userAddress?.toLowerCase());
+        const delegations = await fetchDelegationEventsByUser(voteDelegateAddress, userAddress!, network);
+        
         let stakingEngineDelegated = 0n;
         let directDelegated = 0n; // Calculate this as needed
         for (let i = 0; i < delegations.length; i++) {
