@@ -18,7 +18,6 @@ import {
 import { Delegate } from 'modules/delegates/types';
 import { DelegateStatusEnum } from 'modules/delegates/delegates.constants';
 import { DelegateSKYDelegatedStats } from './DelegateSKYDelegatedStats';
-import { DelegateSKYChart } from './DelegateSKYChart';
 import useSWR, { useSWRConfig } from 'swr';
 import { fetchJson } from 'lib/fetchJson';
 import { PollingParticipationOverview } from 'modules/polling/components/PollingParticipationOverview';
@@ -28,7 +27,6 @@ import { useLockedSky } from 'modules/sky/hooks/useLockedSky';
 import DelegatedByAddress from 'modules/delegates/components/DelegatedByAddress';
 import { useAccount } from 'modules/app/hooks/useAccount';
 import { Address } from 'modules/address/components/Address';
-import { formatDelegationHistory } from '../helpers/formatDelegationHistory';
 import { formatCurrentDelegations } from '../helpers/formatCurrentDelegations';
 import { InternalLink } from 'modules/app/components/InternalLink';
 import EtherscanLink from 'modules/web3/components/EtherscanLink';
@@ -55,12 +53,10 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
   const { data: totalStaked } = useLockedSky(delegate.voteDelegateAddress);
   const { voteDelegateContractAddress } = useAccount();
 
-  // Use new delegations data if available, otherwise fall back to old delegation history
-  const delegationHistory = delegate.delegations
-    ? formatCurrentDelegations(delegate.delegations)
-    : formatDelegationHistory(delegate.skyLockedDelegate);
+  // Format current delegations
+  const delegations = delegate.delegations ? formatCurrentDelegations(delegate.delegations) : [];
 
-  const activeDelegators = delegationHistory.filter(({ lockAmount }) => parseEther(lockAmount) > 0n);
+  const activeDelegators = delegations.filter(({ lockAmount }) => parseEther(lockAmount) > 0n);
   const delegatorCount = activeDelegators.length;
   const isOwner = delegate.voteDelegateAddress.toLowerCase() === voteDelegateContractAddress?.toLowerCase();
 
@@ -79,21 +75,17 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
     <Box key="delegate-participation-metrics">
       {delegate.status === DelegateStatusEnum.aligned && <DelegateParticipationMetrics delegate={delegate} />}
       {delegate.status === DelegateStatusEnum.aligned && <Divider />}
-      {delegationHistory.length > 0 && totalStaked ? (
+      {delegations.length > 0 && totalStaked ? (
         <>
           <Box sx={{ pl: [3, 4], pr: [3, 4], py: [3, 4] }}>
             <DelegatedByAddress
-              delegators={delegationHistory}
+              delegators={delegations}
               totalDelegated={totalStaked}
               delegateAddress={delegate.voteDelegateAddress}
             />
           </Box>
           <Divider />
 
-          <Box sx={{ pl: [3, 4], pr: [3, 4], pb: [3, 4] }}>
-            <DelegateSKYChart delegate={delegate} />
-          </Box>
-          <Divider />
         </>
       ) : (
         <Box p={[3, 4]} mt={1}>

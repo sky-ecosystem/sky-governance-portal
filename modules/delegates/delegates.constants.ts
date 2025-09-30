@@ -11,11 +11,6 @@ export enum DelegateStatusEnum {
   shadow = 'shadow'
 }
 
-export enum SKYWeightTimeRanges {
-  day = 'day',
-  week = 'week',
-  month = 'month'
-}
 
 export enum DelegateTypeEnum {
   ALIGNED = 'ALIGNED',
