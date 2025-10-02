@@ -13,7 +13,6 @@ import {
   DelegateTypeEnum
 } from 'modules/delegates/delegates.constants';
 import { fetchGithubDelegate, fetchGithubDelegates } from './fetchGithubDelegates';
-import { fetchDelegationEventsByAddresses } from './fetchDelegationEventsByAddresses';
 import { DEFAULT_NETWORK, SupportedNetworks } from 'modules/web3/constants/networks';
 import {
   Delegate,
@@ -65,7 +64,6 @@ function mergeDelegateInfo({
     skyDelegated: onChainDelegate.skyDelegated,
     proposalsSupported: onChainDelegate.proposalsSupported,
     execSupported: undefined,
-    skyLockedDelegate: onChainDelegate.skyLockedDelegate,
     delegations: onChainDelegate.delegations, // Include current delegations from subgraph
     blockTimestamp: onChainDelegate.blockTimestamp
   };
@@ -86,13 +84,6 @@ export async function fetchDelegate(
   if (!onChainDelegate) {
     return Promise.resolve(undefined);
   }
-
-  const delegationEvents = await fetchDelegationEventsByAddresses(
-    [onChainDelegate.voteDelegateAddress],
-    network || SupportedNetworks.MAINNET
-  );
-
-  onChainDelegate.skyLockedDelegate = delegationEvents;
 
   // fetch github info for delegate
   const { data: githubDelegate } = await fetchGithubDelegate(

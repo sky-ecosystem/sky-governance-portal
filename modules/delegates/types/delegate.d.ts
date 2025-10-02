@@ -57,7 +57,6 @@ export type DelegateContractInformation = {
   blockTimestamp: string;
   skyDelegated: string;
   proposalsSupported: number;
-  skyLockedDelegate: SkyLockedDelegateApiResponse[];
   delegations?: { delegator: string; amount: string }[]; // current delegations from subgraph
   lastVoteDate: number | null;
 };
@@ -79,7 +78,6 @@ export type Delegate = {
   skyDelegated: string;
   proposalsSupported: number;
   execSupported: CMSProposal | undefined;
-  skyLockedDelegate: SkyLockedDelegateApiResponse[];
   delegations?: { delegator: string; amount: string }[]; // current delegations from subgraph
   blockTimestamp: string;
 };
@@ -93,7 +91,6 @@ export type DelegatePaginated = Omit<
   | 'lastVoteDate'
   | 'externalUrl'
   | 'execSupported'
-  | 'skyLockedDelegate'
 > & {
   picture?: string;
   creationDate: Date;
