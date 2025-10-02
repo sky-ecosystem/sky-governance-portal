@@ -12,6 +12,7 @@ import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { formatCurrentDelegations } from '../helpers/formatCurrentDelegations';
 import { DelegationHistory } from '../types';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
+import { stakingEngineAddressMainnet, stakingEngineAddressTestnet } from 'modules/gql/gql.constants';
 
 export type PaginatedDelegationsResponse = {
   delegations: DelegationHistory[];
@@ -26,6 +27,8 @@ export async function fetchDelegatePaginatedDelegations(
 ): Promise<PaginatedDelegationsResponse> {
   const delegateId = delegateAddress.toLowerCase();
   const chainId = networkNameToChainId(network);
+  const stakingEngineAddresses = [stakingEngineAddressMainnet, stakingEngineAddressTestnet];
+  
   const response = await gqlRequest({
     chainId,
     query: delegateWithPaginatedDelegations,
@@ -34,7 +37,9 @@ export async function fetchDelegatePaginatedDelegations(
       first: limit,
       skip: offset,
       orderBy: 'amount',
-      orderDirection: 'desc'
+      orderDirection: 'desc',
+      excludeAddresses: stakingEngineAddresses,
+      stakingEngineAddresses
     }
   });
 
@@ -47,9 +52,11 @@ export async function fetchDelegatePaginatedDelegations(
 
   const formattedDelegations = formatCurrentDelegations(response.delegate.delegations);
   const totalDelegators = response.delegate.delegators || 0;
+  const hasStakingEngine = response.delegate.stakingEngineDelegations?.length > 0;
+  const adjustedTotal = hasStakingEngine ? Math.max(0, totalDelegators - 1) : totalDelegators;
 
   return {
     delegations: formattedDelegations,
-    total: totalDelegators
+    total: adjustedTotal
   };
 }
