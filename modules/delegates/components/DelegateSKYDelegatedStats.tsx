@@ -53,13 +53,14 @@ export function DelegateSKYDelegatedStats({
         }
         label={'Total SKY Delegated'}
       />
+      {/* TODO: Change back to Total Active Delegators once we update the subgraph to exclude delegators with an amount of 0 */}
       <StatBox
         value={
           typeof delegatorCount !== 'undefined'
             ? delegatorCount.toLocaleString(undefined, { maximumFractionDigits: 0 })
             : '--'
         }
-        label={'Total Active Delegators'}
+        label={'Total Delegators'}
       />
       {account && (
         <StatBox

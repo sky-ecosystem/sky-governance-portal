@@ -6,8 +6,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { useMemo, useState } from 'react';
-import { Box, Text, Flex, IconButton, Heading } from 'theme-ui';
+import { useState } from 'react';
+import { Box, Text, Flex, IconButton, Heading, Button } from 'theme-ui';
 import { useBreakpointIndex } from '@theme-ui/match-media';
 import Icon from 'modules/app/components/Icon';
 import { InternalLink } from 'modules/app/components/InternalLink';
@@ -22,13 +22,16 @@ import AddressIconBox from 'modules/address/components/AddressIconBox';
 import EtherscanLink from 'modules/web3/components/EtherscanLink';
 import { useNetwork } from 'modules/app/hooks/useNetwork';
 import { calculatePercentage } from 'lib/utils';
-import { fetchJson } from 'lib/fetchJson';
 import useSWR from 'swr';
+import { fetchJson } from 'lib/fetchJson';
 
 type DelegatedByAddressProps = {
   delegators: DelegationHistory[];
   totalDelegated: bigint;
-  delegateAddress?: string; // Optional for backwards compatibility, used for lazy-loading
+  delegateAddress: string;
+  hasMore: boolean;
+  isLoading: boolean;
+  onLoadMore: () => void;
 };
 
 type CollapsableRowProps = {
@@ -231,46 +234,9 @@ const CollapsableRow = ({ delegator, network, bpi, totalDelegated, delegateAddre
   );
 };
 
-const DelegatedByAddress = ({ delegators, totalDelegated, delegateAddress }: DelegatedByAddressProps): JSX.Element => {
+const DelegatedByAddress = ({ delegators, totalDelegated, delegateAddress, hasMore, isLoading, onLoadMore }: DelegatedByAddressProps): JSX.Element => {
   const bpi = useBreakpointIndex();
   const network = useNetwork();
-
-  const [sortBy, setSortBy] = useState({
-    type: 'sky',
-    order: 1
-  });
-
-  const changeSort = type => {
-    if (sortBy.type === type) {
-      setSortBy({
-        type,
-        order: sortBy.order === 1 ? -1 : 1
-      });
-    } else {
-      setSortBy({
-        type,
-        order: 1
-      });
-    }
-  };
-
-  const sortedDelegators = useMemo(() => {
-    switch (sortBy.type) {
-      case 'sky':
-        return delegators?.sort((a, b) => {
-          const aSKY = parseEther(a.lockAmount);
-          const bSKY = parseEther(b.lockAmount);
-          return sortBy.order === 1 ? (aSKY > bSKY ? -1 : 1) : aSKY > bSKY ? 1 : -1;
-        });
-      case 'address':
-        return delegators?.sort((a, b) =>
-          sortBy.order === 1 ? (a.address > b.address ? -1 : 1) : a.address > b.address ? 1 : -1
-        );
-
-      default:
-        return delegators;
-    }
-  }, [delegators, sortBy.type, sortBy.order]);
 
   return (
     <Box>
@@ -299,55 +265,25 @@ const DelegatedByAddress = ({ delegators, totalDelegated, delegateAddress }: Del
           <tr>
             <Text
               as="th"
-              sx={{ cursor: 'pointer', textAlign: 'left', pb: 2, width: '30%' }}
+              sx={{ textAlign: 'left', pb: 2, width: '30%' }}
               variant="caps"
-              onClick={() => changeSort('address')}
             >
               Address
-              {sortBy.type === 'address' ? (
-                sortBy.order === 1 ? (
-                  <Icon name="chevron_down" size={2} sx={{ ml: 1 }} />
-                ) : (
-                  <Icon name="chevron_up" size={2} sx={{ ml: 1 }} />
-                )
-              ) : (
-                ''
-              )}
             </Text>
             <Text
               as="th"
-              sx={{ cursor: 'pointer', textAlign: 'left', pb: 2, width: '30%' }}
+              sx={{ textAlign: 'left', pb: 2, width: '30%' }}
               variant="caps"
-              onClick={() => changeSort('sky')}
             >
               {bpi < 1 ? 'SKY' : 'SKY Delegated'}
-              {sortBy.type === 'sky' ? (
-                sortBy.order === 1 ? (
-                  <Icon name="chevron_down" size={2} sx={{ ml: 1 }} />
-                ) : (
-                  <Icon name="chevron_up" size={2} sx={{ ml: 1 }} />
-                )
-              ) : (
-                ''
-              )}
             </Text>
             <Tooltip label={'This is the percentage of the total SKY delegated to this delegate.'}>
               <Text
                 as="th"
-                sx={{ cursor: 'pointer', textAlign: 'left', pb: 2, width: '20%' }}
+                sx={{ textAlign: 'left', pb: 2, width: '20%' }}
                 variant="caps"
-                onClick={() => changeSort('sky')}
               >
                 {bpi < 1 ? '%' : 'Voting Weight'}
-                {sortBy.type === 'sky' ? (
-                  sortBy.order === 1 ? (
-                    <Icon name="chevron_down" size={2} sx={{ ml: 1 }} />
-                  ) : (
-                    <Icon name="chevron_up" size={2} sx={{ ml: 1 }} />
-                  )
-                ) : (
-                  ''
-                )}
               </Text>
             </Tooltip>
             <Text as="th" sx={{ textAlign: 'right', pb: 2, width: '20%' }} variant="caps">
@@ -356,8 +292,8 @@ const DelegatedByAddress = ({ delegators, totalDelegated, delegateAddress }: Del
           </tr>
         </thead>
         <tbody>
-          {sortedDelegators ? (
-            sortedDelegators.map(delegator => (
+          {delegators.length > 0 ? (
+            delegators.map(delegator => (
               <CollapsableRow
                 key={delegator.address}
                 delegator={delegator}
@@ -369,15 +305,29 @@ const DelegatedByAddress = ({ delegators, totalDelegated, delegateAddress }: Del
             ))
           ) : (
             <tr key={0}>
-              <td colSpan={3}>
+              <td colSpan={4}>
                 <Text color="text" variant="allcaps">
-                  Loading
+                  {isLoading ? 'Loading...' : 'No delegators found'}
                 </Text>
               </td>
             </tr>
           )}
         </tbody>
       </table>
+      {hasMore && (
+        <Flex sx={{ justifyContent: 'center', mt: 4, mb: 2 }}>
+          <Button
+            variant="mutedOutline"
+            onClick={onLoadMore}
+            disabled={isLoading}
+            sx={{
+              cursor: isLoading ? 'wait' : 'pointer',
+            }}
+          >
+            {isLoading ? 'Loading...' : 'Load More'}
+          </Button>
+        </Flex>
+      )}
     </Box>
   );
 };
