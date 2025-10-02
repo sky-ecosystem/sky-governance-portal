@@ -18,6 +18,7 @@ import {
 import { Delegate, DelegationHistory } from 'modules/delegates/types';
 import { DelegateStatusEnum } from 'modules/delegates/delegates.constants';
 import { DelegateSKYDelegatedStats } from './DelegateSKYDelegatedStats';
+// import { DelegateSKYChart } from './DelegateSKYChart';
 import useSWR, { useSWRConfig } from 'swr';
 import { fetchJson } from 'lib/fetchJson';
 import { PollingParticipationOverview } from 'modules/polling/components/PollingParticipationOverview';
@@ -134,6 +135,11 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
             />
           </Box>
           <Divider />
+
+          {/* <Box sx={{ pl: [3, 4], pr: [3, 4], pb: [3, 4] }}>
+            <DelegateSKYChart delegate={delegate} />
+          </Box>
+          <Divider /> */}
 
         </>
       ) : (
