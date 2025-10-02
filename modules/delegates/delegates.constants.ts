@@ -19,5 +19,18 @@ export enum SKYWeightTimeRanges {
 
 export enum DelegateTypeEnum {
   ALIGNED = 'ALIGNED',
-  SHADOW = 'SHADOW'
+  SHADOW = 'SHADOW',
+  ALL = 'ALL'
+}
+
+export enum DelegateOrderByEnum {
+  SKY = 'delegators',
+  DELEGATORS = 'delegators', 
+  DATE = 'blockTimestamp',
+  RANDOM = 'RANDOM'
+}
+
+export enum OrderDirectionEnum {
+  ASC = 'asc',
+  DESC = 'desc'
 }

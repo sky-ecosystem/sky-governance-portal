@@ -28,6 +28,18 @@ import { format } from 'date-fns';
 import { formatDelegationHistoryChart } from '../helpers/formatDelegationHistoryChart';
 
 export function DelegateSKYChart({ delegate }: { delegate: Delegate }): React.ReactElement {
+  // Chart functionality temporarily disabled
+  return (
+    <Box>
+      <Text as="p" variant="secondary" color="onSurface">
+        Chart temporarily disabled
+      </Text>
+    </Box>
+  );
+
+  /* 
+  // All chart-related code commented out until skyLockedDelegate is restored
+  
   const { theme } = useThemeUI();
 
   // Time ranges
@@ -199,4 +211,5 @@ export function DelegateSKYChart({ delegate }: { delegate: Delegate }): React.Re
       </Box>
     </Box>
   );
+  */
 }
