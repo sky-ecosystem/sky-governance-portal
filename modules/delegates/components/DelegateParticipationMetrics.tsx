@@ -85,18 +85,10 @@ export function DelegateParticipationMetrics({ delegate }: { delegate: Delegate 
 
       <Box sx={styles.row}>
         <Text as="p" sx={styles.text}>
-          Poll Participation
+          Participation
         </Text>
         <Text as="p" sx={styles.text} ml={2}>
-          {delegate.pollParticipation || 'Untracked'}
-        </Text>
-      </Box>
-      <Box sx={styles.row}>
-        <Text as="p" sx={styles.text}>
-          Executive Participation
-        </Text>
-        <Text as="p" sx={styles.text} ml={2}>
-          {delegate.executiveParticipation || 'Untracked'}
+          {delegate.combinedParticipation || 'Untracked'}
         </Text>
       </Box>
       <Box sx={styles.row}>

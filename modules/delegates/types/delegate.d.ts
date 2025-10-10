@@ -33,8 +33,6 @@ export type DelegateRepoInformation = {
   externalUrl: string;
   description: string;
   combinedParticipation?: string;
-  pollParticipation?: string;
-  executiveParticipation?: string;
   communication?: string;
   tags?: string[];
 };
@@ -45,8 +43,6 @@ export type DelegateListItem = {
   name: string;
   externalUrl: string;
   combinedParticipation?: string;
-  pollParticipation?: string;
-  executiveParticipation?: string;
   communication?: string;
   tags?: string[];
 };
@@ -72,8 +68,6 @@ export type Delegate = {
   lastVoteDate: number | null;
   externalUrl?: string;
   combinedParticipation?: string;
-  pollParticipation?: string;
-  executiveParticipation?: string;
   communication?: string;
   skyDelegated: string;
   proposalsSupported: number;
@@ -84,13 +78,7 @@ export type Delegate = {
 
 export type DelegatePaginated = Omit<
   Delegate,
-  | 'id'
-  | 'blockTimestamp'
-  | 'picture'
-  | 'description'
-  | 'lastVoteDate'
-  | 'externalUrl'
-  | 'execSupported'
+  'id' | 'blockTimestamp' | 'picture' | 'description' | 'lastVoteDate' | 'externalUrl' | 'execSupported'
 > & {
   picture?: string;
   creationDate: Date;

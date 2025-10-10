@@ -81,8 +81,6 @@ async function extractGithubInformation(
       description: html,
       tags: metadata.tags,
       combinedParticipation: metrics.combined_participation,
-      pollParticipation: metrics.poll_participation,
-      executiveParticipation: metrics.exec_participation,
       communication: metrics.communication
     };
   } catch (e) {
@@ -103,8 +101,6 @@ async function extractGithubDelegateListInformation(
       name: metadata.name,
       externalUrl: metadata.external_profile_url,
       combinedParticipation: metrics.combined_participation,
-      pollParticipation: metrics.poll_participation,
-      executiveParticipation: metrics.exec_participation,
       communication: metrics.communication,
       tags: metadata.tags
     };
