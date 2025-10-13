@@ -385,5 +385,172 @@
   "1570": [
     "medium-impact",
     "spark"
+  ],
+  "1571": [
+    "high-impact",
+    "weekly",
+    "misc-governance",
+    "endgame"
+  ],
+  "1572": [
+    "low-impact",
+    "spark",
+    "misc-funding"
+  ],
+  "1573": [
+    "medium-impact",
+    "risk-parameter",
+    "spark",
+    "bridge"
+  ],
+  "1574": [
+    "high-impact",
+    "spark",
+    "technical"
+  ],
+  "1575": [
+    "medium-impact",
+    "risk-parameter",
+    "spark",
+    "bridge"
+  ],
+  "1576": [
+    "high-impact",
+    "risk-parameter",
+    "spark",
+    "collateral-onboard"
+  ],
+  "1577": [
+    "medium-impact",
+    "risk-parameter",
+    "spark",
+    "collateral-onboard"
+  ],
+  "1578": [
+    "high-impact",
+    "spark",
+    "technical"
+  ],
+  "1579": [
+    "medium-impact",
+    "risk-parameter",
+    "spark",
+    "collateral-onboard"
+  ],
+  "1580": [
+    "medium-impact",
+    "risk-parameter",
+    "spark"
+  ],
+  "1581": [
+    "low-impact",
+    "spark",
+    "misc-funding"
+  ],
+  "1582": [
+    "high-impact",
+    "spark",
+    "weekly",
+    "misc-governance",
+    "endgame"
+  ],
+  "1583": [
+    "high-impact",
+    "technical"
+  ],
+  "1584": [
+    "high-impact",
+    "spark",
+    "collateral-onboard"
+  ],
+  "1585": [
+    "high-impact",
+    "risk-parameter",
+    "weekly",
+    "misc-governance",
+    "endgame"
+  ],
+  "1586": [
+    "high-impact",
+    "risk-parameter",
+    "spark",
+    "technical"
+  ],
+  "1587": [
+    "medium-impact",
+    "risk-parameter",
+    "spark"
+  ],
+  "1588": [
+    "low-impact",
+    "spark",
+    "misc-funding"
+  ],
+  "1589": [
+    "high-impact",
+    "risk-parameter",
+    "spark"
+  ],
+  "1590": [
+    "high-impact",
+    "risk-parameter",
+    "spark",
+    "collateral-onboard",
+    "technical"
+  ],
+  "1591": [
+    "high-impact",
+    "spark",
+    "technical"
+  ],
+  "1592": [
+    "medium-impact",
+    "risk-parameter",
+    "spark"
+  ],
+  "1593": [
+    "low-impact",
+    "spark",
+    "misc-funding"
+  ],
+  "1594": [
+    "high-impact",
+    "risk-parameter",
+    "grove",
+    "technical"
+  ],
+  "1595": [
+    "high-impact",
+    "risk-parameter",
+    "grove",
+    "dao-resolution",
+    "collateral-onboard",
+    "technical"
+  ],
+  "1596": [
+    "high-impact",
+    "risk-parameter",
+    "keel",
+    "technical"
+  ],
+  "1597": [
+    "high-impact",
+    "risk-parameter",
+    "spark",
+    "weekly",
+    "real-world-assets",
+    "misc-governance",
+    "endgame"
+  ],
+  "1598": [
+    "high-impact",
+    "risk-parameter",
+    "keel",
+    "weekly",
+    "oracle",
+    "technical",
+    "real-world-assets",
+    "misc-governance",
+    "endgame"
   ]
 }

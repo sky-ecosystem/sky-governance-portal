@@ -23,8 +23,10 @@ export const config = {
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
+  // Redirect /api-docs with query params to clean URL
   if (pathname === '/api-docs' && search.length > 0) {
-    return NextResponse.redirect('/api-docs');
+    const url = new URL('/api-docs', request.url);
+    return NextResponse.redirect(url);
   }
 
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');

@@ -47,7 +47,6 @@ import { DialogOverlay, DialogContent } from 'modules/app/components/Dialog';
 import BoxWithClose from 'modules/app/components/BoxWithClose';
 import { PollOrderByEnum, SKY_PORTAL_START_DATE_MAINNET } from 'modules/polling/polling.constants';
 import { useNetwork } from 'modules/app/hooks/useNetwork';
-import { formatEther } from 'viem';
 
 const editMarkdown = (content: string) => {
   // hide the duplicate proposal title

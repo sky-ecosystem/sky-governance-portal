@@ -17,20 +17,20 @@ import 'swagger-ui-react/swagger-ui.css';
 import { Box, useColorMode } from 'theme-ui';
 import { createSwaggerSpec } from 'next-swagger-doc';
 import { useRouter } from 'next/router';
-import { InternalLink } from 'modules/app/components/InternalLink';
+import { useEffect } from 'react';
 
 const ApiDoc = ({ spec }: InferGetStaticPropsType<typeof getStaticProps>): JSX.Element => {
-  const router = useRouter();
   const [mode] = useColorMode();
+  const router = useRouter();
 
-  return Object.keys(router.query).length > 0 ? (
-    <Box>
-      <h2>Invalid Route</h2>
-      <InternalLink href="/api-docs" title="View API docs">
-        <a title="See API docs">Go to the API docs</a>
-      </InternalLink>
-    </Box>
-  ) : (
+  // Strip query parameters if present
+  useEffect(() => {
+    if (Object.keys(router.query).length > 0) {
+      router.replace('/api-docs', undefined, { shallow: true });
+    }
+  }, [router]);
+
+  return (
     <PrimaryLayout sx={{ maxWidth: [null, null, null, 'page', 'dashboard'] }}>
       <HeadComponent title="API Docs" />
       <Box

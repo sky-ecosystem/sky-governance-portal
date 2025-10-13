@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text, Flex, Divider } from 'theme-ui';
 import Tabs from 'modules/app/components/Tabs';
 import {
@@ -15,10 +15,10 @@ import {
   DelegateVoteHistory,
   DelegateParticipationMetrics
 } from 'modules/delegates/components';
-import { Delegate } from 'modules/delegates/types';
+import { Delegate, DelegationHistory } from 'modules/delegates/types';
 import { DelegateStatusEnum } from 'modules/delegates/delegates.constants';
 import { DelegateSKYDelegatedStats } from './DelegateSKYDelegatedStats';
-import { DelegateSKYChart } from './DelegateSKYChart';
+// import { DelegateSKYChart } from './DelegateSKYChart';
 import useSWR, { useSWRConfig } from 'swr';
 import { fetchJson } from 'lib/fetchJson';
 import { PollingParticipationOverview } from 'modules/polling/components/PollingParticipationOverview';
@@ -28,12 +28,9 @@ import { useLockedSky } from 'modules/sky/hooks/useLockedSky';
 import DelegatedByAddress from 'modules/delegates/components/DelegatedByAddress';
 import { useAccount } from 'modules/app/hooks/useAccount';
 import { Address } from 'modules/address/components/Address';
-import { formatDelegationHistory } from '../helpers/formatDelegationHistory';
-import { formatCurrentDelegations } from '../helpers/formatCurrentDelegations';
 import { InternalLink } from 'modules/app/components/InternalLink';
 import EtherscanLink from 'modules/web3/components/EtherscanLink';
 import { useNetwork } from 'modules/app/hooks/useNetwork';
-import { parseEther } from 'viem';
 
 type PropTypes = {
   delegate: Delegate;
@@ -55,13 +52,59 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
   const { data: totalStaked } = useLockedSky(delegate.voteDelegateAddress);
   const { voteDelegateContractAddress } = useAccount();
 
-  // Use new delegations data if available, otherwise fall back to old delegation history
-  const delegationHistory = delegate.delegations
-    ? formatCurrentDelegations(delegate.delegations)
-    : formatDelegationHistory(delegate.skyLockedDelegate);
+  const fetchSize = 50;
+  const pageSize = 10;
+  
+  const [allDelegators, setAllDelegators] = useState<DelegationHistory[]>([]);
+  const [delegatorCount, setDelegatorCount] = useState<number | undefined>(undefined);
+  const [isLoadingDelegators, setIsLoadingDelegators] = useState(false);
+  const [apiOffset, setApiOffset] = useState(0);
+  const [displayedCount, setDisplayedCount] = useState(pageSize);
 
-  const activeDelegators = delegationHistory.filter(({ lockAmount }) => parseEther(lockAmount) > 0n);
-  const delegatorCount = activeDelegators.length;
+  const fetchDelegators = useCallback(async (offset = 0, append = false) => {
+    if (!delegate.voteDelegateAddress) return;
+    
+    setIsLoadingDelegators(true);
+    
+    try {
+      const response = await fetchJson(
+        `/api/delegates/${delegate.voteDelegateAddress}/delegators?network=${network}&offset=${offset}&limit=${fetchSize}`
+      );
+      
+      if (append) {
+        setAllDelegators(prev => {
+          const newData = [...prev, ...response.delegators];
+          setDisplayedCount(currentDisplayed => Math.min(currentDisplayed + pageSize, newData.length));
+          return newData;
+        });
+      } else {
+        setAllDelegators(response.delegators);
+        setDisplayedCount(pageSize);
+      }
+      
+      setDelegatorCount(response.total);
+      setApiOffset(offset);
+    } catch (error) {
+      console.error('Error fetching delegators:', error);
+    } finally {
+      setIsLoadingDelegators(false);
+    }
+  }, [delegate.voteDelegateAddress, network, fetchSize]);
+
+  const handleLoadMore = useCallback(() => {
+    const needsApiCall = displayedCount >= allDelegators.length && allDelegators.length < (delegatorCount || 0);
+    
+    if (needsApiCall) {
+      const newOffset = apiOffset + fetchSize;
+      fetchDelegators(newOffset, true);
+    } else {
+      setDisplayedCount(prev => Math.min(prev + pageSize, allDelegators.length));
+    }
+  }, [displayedCount, allDelegators.length, delegatorCount, apiOffset, fetchSize, fetchDelegators, pageSize]);
+
+  useEffect(() => {
+    fetchDelegators(0, false);
+  }, [fetchDelegators]);
   const isOwner = delegate.voteDelegateAddress.toLowerCase() === voteDelegateContractAddress?.toLowerCase();
 
   const tabTitles = [
@@ -79,21 +122,25 @@ export function DelegateDetail({ delegate }: PropTypes): React.ReactElement {
     <Box key="delegate-participation-metrics">
       {delegate.status === DelegateStatusEnum.aligned && <DelegateParticipationMetrics delegate={delegate} />}
       {delegate.status === DelegateStatusEnum.aligned && <Divider />}
-      {delegationHistory.length > 0 && totalStaked ? (
+      {totalStaked ? (
         <>
           <Box sx={{ pl: [3, 4], pr: [3, 4], py: [3, 4] }}>
             <DelegatedByAddress
-              delegators={delegationHistory}
+              delegators={allDelegators.slice(0, displayedCount)}
               totalDelegated={totalStaked}
               delegateAddress={delegate.voteDelegateAddress}
+              hasMore={displayedCount < (delegatorCount || 0)}
+              isLoading={isLoadingDelegators}
+              onLoadMore={handleLoadMore}
             />
           </Box>
           <Divider />
 
-          <Box sx={{ pl: [3, 4], pr: [3, 4], pb: [3, 4] }}>
+          {/* <Box sx={{ pl: [3, 4], pr: [3, 4], pb: [3, 4] }}>
             <DelegateSKYChart delegate={delegate} />
           </Box>
-          <Divider />
+          <Divider /> */}
+
         </>
       ) : (
         <Box p={[3, 4]} mt={1}>
