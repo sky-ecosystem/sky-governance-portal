@@ -348,6 +348,7 @@ export async function fetchDelegatesPaginated({
         creationDate: finalCreationDate,
         picture: githubDelegate?.picture,
         communication: githubDelegate?.communication,
+        // Only use combined participation
         combinedParticipation: githubDelegate?.combinedParticipation,
         skyDelegated: formatEther(totalDelegated),
         delegatorCount: delegate.delegators,
