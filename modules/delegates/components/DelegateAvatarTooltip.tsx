@@ -83,18 +83,10 @@ export function DelegateAvatarTooltip({
         <Flex sx={{ justifyContent: 'space-between', mt: 2 }}>
           <Flex sx={{ flexDirection: 'column' }}>
             <Text as="p" sx={{ fontWeight: 'semiBold' }}>
-              {delegate.pollParticipation || 'Untracked'}
+              {delegate.combinedParticipation || 'Untracked'}
             </Text>
             <Text as="p" sx={{ fontSize: 2 }}>
-              Poll Participation
-            </Text>
-          </Flex>
-          <Flex sx={{ flexDirection: 'column' }}>
-            <Text as="p" sx={{ fontWeight: 'semiBold' }}>
-              {delegate.executiveParticipation || 'Untracked'}
-            </Text>
-            <Text as="p" sx={{ fontSize: 2 }}>
-              Executive Participation
+              Participation
             </Text>
           </Flex>
           <Flex sx={{ flexDirection: 'column' }}>
