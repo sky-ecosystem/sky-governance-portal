@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const allLocksSummed = gql`
+export const allLocksSummed = /* GraphQL */ `
   query allLocksSummed($unixtimeStart: Int!, $unixtimeEnd: Int!) {
     allLocksSummed(unixtimeStart: $unixtimeStart, unixtimeEnd: $unixtimeEnd) {
       nodes {

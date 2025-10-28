@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const arbitrumPollsQueryWithWhitelist = gql`
+export const arbitrumPollsQueryWithWhitelist = /* GraphQL */ `
   query ArbitrumPollsWithWhitelist($argsSkip: Int!, $creatorWhitelist: [String!]!) {
     arbitrumPolls(
       first: 1000
@@ -27,7 +25,7 @@ export const arbitrumPollsQueryWithWhitelist = gql`
   }
 `;
 
-export const arbitrumPollsQuery = gql`
+export const arbitrumPollsQuery = /* GraphQL */ `
   query ArbitrumPolls($argsSkip: Int!) {
     arbitrumPolls(
       first: 1000
