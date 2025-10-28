@@ -4,9 +4,7 @@ SPDX-FileCopyrightText: © 2023 Dai Foundation <www.daifoundation.org>
 SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
-import { gql } from 'graphql-request';
-
-export const lastVotedArbitrum = gql`
+export const lastVotedArbitrum = /* GraphQL */ `
     query lastVotedArbitrum($argAddresses: [String!]) {
     arbitrumVoters(where: {id_in: $argAddresses}) {
         id

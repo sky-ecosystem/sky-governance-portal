@@ -3,9 +3,7 @@ SPDX-FileCopyrightText: © 2023 Dai Foundation <www.daifoundation.org>
 SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
-import { gql } from 'graphql-request';
-
-export const allSpellVotes = gql`
+export const allSpellVotes = /* GraphQL */ `
   query allSpellVotes($argSkip: Int, $argFirst: Int) {
     executiveVoteV2S(first: $argFirst, skip: $argSkip, orderBy: id, orderDirection: desc) {
       blockTime
