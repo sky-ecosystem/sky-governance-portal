@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const voteAddressSkyWeightsAtTime = gql`
+export const voteAddressSkyWeightsAtTime = /* GraphQL */ `
   query voteAddressSkyWeightsAtTime($argVoters: [String!]!, $argUnix: BigInt!) {
     voters(where: { id_in: $argVoters }) {
       id
