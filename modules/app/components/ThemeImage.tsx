@@ -30,18 +30,16 @@ export const ThemeImage = () => {
       <Image
         src={skyBgLight}
         alt="light-sky-background"
-        layout="fill"
-        objectFit="cover"
-        sx={{ display: clientMode === 'light' ? 'block' : 'none' }}
+        fill
+        style={{ objectFit: 'cover', display: clientMode === 'light' ? 'block' : 'none' }}
         placeholder="blur"
         quality={100}
       />
       <Image
         src={skyBgDark}
         alt="dark-sky-background"
-        layout="fill"
-        objectFit="cover"
-        sx={{ display: clientMode === 'dark' ? 'block' : 'none' }}
+        fill
+        style={{ objectFit: 'cover', display: clientMode === 'dark' ? 'block' : 'none' }}
         placeholder="blur"
         quality={100}
       />
