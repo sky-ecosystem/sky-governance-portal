@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const allDelegates = gql`
+export const allDelegates = /* GraphQL */ `
 {
   delegates(first: 1000, where: {version: "3"}) {
     blockTimestamp

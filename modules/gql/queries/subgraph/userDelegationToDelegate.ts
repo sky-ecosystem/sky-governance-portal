@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const userDelegationToDelegate = gql`
+export const userDelegationToDelegate = /* GraphQL */ `
   query userDelegationToDelegate($delegate: String!, $delegator: String!) {
     delegate(id: $delegate) {
       delegationHistory(first: 1000, where: {delegator: $delegator}) {

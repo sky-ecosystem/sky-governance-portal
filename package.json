@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "version": "1.0.0",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
@@ -43,14 +43,13 @@
     "debug": "^4.4.0",
     "defender-relay-client": "^1.23.0",
     "eth-rpc-errors": "^4.0.3",
-    "graphql-request": "^4.0.0",
     "gray-matter": "^4.0.2",
     "ioredis": "^5.0.6",
     "ipfs-only-hash": "^4.0.0",
     "lodash": "^4.17.21",
     "lottie-web": "^5.7.1",
     "mersenne-twister": "^1.1.0",
-    "next": "^14.2.32",
+    "next": "^14.2.35",
     "next-swagger-doc": "^0.1.10",
     "nextjs-progressbar": "^0.0.13",
     "react": "^18.3.1",
@@ -65,7 +64,7 @@
     "remark-parse": "^10.0.1",
     "remark-rehype": "^10.1.0",
     "superjson": "^1.8.1",
-    "swagger-ui-react": "^5.21.0",
+    "swagger-ui-react": "^5.29.5",
     "swr": "^1.0.1",
     "theme-ui": "^0.16.0",
     "tiny-invariant": "^1.1.0",
@@ -99,7 +98,7 @@
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-testing-library": "^5.10.2",
     "graphql": "^16.8.1",
-    "happy-dom": "^20.0.0",
+    "happy-dom": "^20.0.2",
     "husky": "^6.0.0",
     "node-fetch": "^3.2.4",
     "node-mocks-http": "^1.11.0",

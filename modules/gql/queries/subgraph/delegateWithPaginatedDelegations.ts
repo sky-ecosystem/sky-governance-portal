@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const delegateWithPaginatedDelegations = gql`
+export const delegateWithPaginatedDelegations = /* GraphQL */ `
   query delegateWithPaginatedDelegations(
     $id: ID!
     $first: Int!

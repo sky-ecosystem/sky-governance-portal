@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const delegatesQuerySubsequentPages = gql`
+export const delegatesQuerySubsequentPages = /* GraphQL */ `
   query delegates(
     $first: Int
     $skip: Int
@@ -42,7 +40,7 @@ export const delegatesQuerySubsequentPages = gql`
   }
 `;
 
-export const delegatesQueryFirstPage = gql`
+export const delegatesQueryFirstPage = /* GraphQL */ `
   query delegates(
     $first: Int
     $skip: Int

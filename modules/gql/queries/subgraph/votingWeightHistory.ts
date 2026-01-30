@@ -6,9 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { gql } from 'graphql-request';
-
-export const votingWeightHistory = gql`
+export const votingWeightHistory = /* GraphQL */ `
   query VotingWeightHistory($argAddress: String){
     executiveVotingPowerChangeV2S(where: {voter: $argAddress}){
 			blockTimestamp
