@@ -32,7 +32,9 @@ import { encodeFunctionData, getAddress, parseSignature } from 'viem';
 export const API_VOTE_ERRORS = {
   VOTER_MUST_BE_STRING: 'Voter must be a string.',
   POLLIDS_MUST_BE_ARRAY_NUMBERS: 'PollIds must be an array of numbers.',
+  POLLIDS_CANNOT_BE_EMPTY: 'PollIds array cannot be empty.',
   OPTIONIDS_MUST_BE_ARRAY_NUMBERS: 'OptionIds must be an array of numbers.',
+  OPTIONIDS_CANNOT_BE_EMPTY: 'OptionIds array cannot be empty.',
   NONCE_MUST_BE_NUMBER: 'Nonce must be a number.',
   EXPIRY_MUST_BE_NUMBER: 'Expiry must be a number.',
   SIGNATURE_MUST_BE_STRING: 'Signature must be a string.',
@@ -91,9 +93,23 @@ export default withApiHandler(
         skipDiscord
       });
     }
+    if (pollIds.length === 0) {
+      await throwError({
+        error: API_VOTE_ERRORS.POLLIDS_CANNOT_BE_EMPTY,
+        body: req.body,
+        skipDiscord
+      });
+    }
     if (!Array.isArray(optionIds) || !optionIds.every(e => !isNaN(parseInt(e)))) {
       await throwError({
         error: API_VOTE_ERRORS.OPTIONIDS_MUST_BE_ARRAY_NUMBERS,
+        body: req.body,
+        skipDiscord
+      });
+    }
+    if (optionIds.length === 0) {
+      await throwError({
+        error: API_VOTE_ERRORS.OPTIONIDS_CANNOT_BE_EMPTY,
         body: req.body,
         skipDiscord
       });
