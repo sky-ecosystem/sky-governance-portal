@@ -182,7 +182,7 @@ export const cacheGet = async (
       }
     }
   } catch (e) {
-    logger.error(`CacheGet: Error getting cached data, ${name} - ${network}`, e.message);
+    logger.error(`CacheGet: Error getting cached data, ${name} - ${network}`, (e as Error).message);
     return null;
   }
 };
@@ -228,7 +228,7 @@ export const cacheSetNX = async (
     cacheSet(name, data, currentNetwork, expiryMs);
     return true;
   } catch (e) {
-    logger.error(`CacheSetNX: Error storing data in cache, ${name} - ${network}`, e.message);
+    logger.error(`CacheSetNX: Error storing data in cache, ${name} - ${network}`, (e as Error).message);
     return true; // On error, allow the operation to proceed
   }
 };
@@ -282,7 +282,7 @@ export const cacheSet = (
 
       memoryCache[path] = {
         expiry: expiryMs ? Date.now() + expiryMs : null,
-        checkedData
+        data: checkedData
       };
     }
   } catch (e) {

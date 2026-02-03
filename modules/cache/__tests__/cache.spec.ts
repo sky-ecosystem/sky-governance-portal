@@ -30,6 +30,10 @@ describe('Cache', () => {
   beforeAll(() => {
     config.USE_CACHE = 'true';
     config.REDIS_URL = '';
+  });
+
+  afterEach(() => {
+    // Clean up test cache files after each test to ensure isolation
     if (fs.existsSync(cacheSetNXFile)) fs.unlinkSync(cacheSetNXFile);
     if (fs.existsSync(cacheSetNXDupFile)) fs.unlinkSync(cacheSetNXDupFile);
   });
