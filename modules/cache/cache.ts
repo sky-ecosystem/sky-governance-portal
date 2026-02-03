@@ -170,7 +170,7 @@ export const cacheGet = async (
         // In order to have an expiry date we can also check the last time this file was accessed or it was created. This conditions having to pass the expiryMs on the cacheGet too
         const { birthtime } = fs.statSync(path);
 
-        if (expiryMs && birthtime && birthtime.getTime() < Date.now() + expiryMs) {
+        if (expiryMs && birthtime && birthtime.getTime() + expiryMs < Date.now()) {
           cacheDel(name, currentNetwork);
           return null;
         }
