@@ -80,6 +80,9 @@ async function throwError({ error, body, code = 400, skipDiscord = false }: Erro
 //TODO: add swagger documentation
 export default withApiHandler(
   async (req: NextApiRequest, res: NextApiResponse) => {
+    // Temporarily disabled
+    return res.status(503).json({ error: 'Gasless voting is temporarily disabled.' });
+
     const { voter, pollIds, optionIds, nonce, expiry, signature, network, secret, skipDiscord } = req.body;
     if (typeof voter !== 'string' || !voter) {
       await throwError({ error: API_VOTE_ERRORS.VOTER_MUST_BE_STRING, body: req.body, skipDiscord });
