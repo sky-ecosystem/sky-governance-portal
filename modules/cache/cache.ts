@@ -170,7 +170,7 @@ export const cacheGet = async (
         // In order to have an expiry date we can also check the last time this file was accessed or it was created. This conditions having to pass the expiryMs on the cacheGet too
         const { birthtime } = fs.statSync(path);
 
-        if (expiryMs && birthtime && birthtime.getTime() < Date.now() + expiryMs) {
+        if (expiryMs && birthtime && birthtime.getTime() + expiryMs < Date.now()) {
           cacheDel(name, currentNetwork);
           return null;
         }
@@ -182,8 +182,54 @@ export const cacheGet = async (
       }
     }
   } catch (e) {
-    logger.error(`CacheGet: Error getting cached data, ${name} - ${network}`, e.message);
+    logger.error(`CacheGet: Error getting cached data, ${name} - ${network}`, (e as Error).message);
     return null;
+  }
+};
+
+/**
+ * Atomic set-if-not-exists operation using Redis SETNX.
+ * Returns true if the key was set (didn't exist), false if it already existed.
+ * This is used to prevent race conditions in rate limiting.
+ */
+export const cacheSetNX = async (
+  name: string,
+  data: string,
+  network?: SupportedNetworks,
+  expiryMs = ONE_HOUR_IN_MS
+): Promise<boolean> => {
+  if (!config.USE_CACHE || config.USE_CACHE === 'false') {
+    return true;
+  }
+
+  const currentNetwork = network || DEFAULT_NETWORK.network;
+  const path = getFilePath(name, currentNetwork, expiryMs);
+
+  try {
+    if (redisCacheEnabled()) {
+      const expirySeconds = Math.round(expiryMs / 1000);
+      logger.debug(`Redis cache setNX for ${path}, with TTL ${expirySeconds} seconds`);
+      // SET with NX (only set if not exists) and EX (expiry in seconds)
+      // Returns 'OK' if key was set, null if key already existed
+      const result = await redis?.set(path, data, 'EX', expirySeconds, 'NX');
+      return result === 'OK';
+    }
+
+    // Fall back to a non-atomic local check/set so rate limiting still works without Redis.
+    const existing = await cacheGet(name, currentNetwork, expiryMs);
+    if (existing) {
+      const parsed = parseInt(existing, 10);
+      const expired = !Number.isNaN(parsed) && Date.now() - parsed > expiryMs;
+      if (!expired) {
+        return false;
+      }
+    }
+
+    cacheSet(name, data, currentNetwork, expiryMs);
+    return true;
+  } catch (e) {
+    logger.error(`CacheSetNX: Error storing data in cache, ${name} - ${network}`, (e as Error).message);
+    return true; // On error, allow the operation to proceed
   }
 };
 
@@ -236,7 +282,7 @@ export const cacheSet = (
 
       memoryCache[path] = {
         expiry: expiryMs ? Date.now() + expiryMs : null,
-        checkedData
+        data: checkedData
       };
     }
   } catch (e) {
