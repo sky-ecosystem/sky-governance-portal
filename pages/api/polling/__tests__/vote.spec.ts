@@ -230,7 +230,7 @@ describe('/api/polling/vote API Endpoint', () => {
 
   it('return 400 if any poll is expired', async () => {
     (checkAndClaimGaslessVotingRateLimit as Mock).mockReturnValue(Promise.resolve(false));
-    (getSKYVotingWeight as Mock).mockReturnValue(Promise.resolve(parseEther('40')));
+    (getSKYVotingWeight as Mock).mockReturnValue(Promise.resolve(parseEther('2500')));
     (getActivePollIds as Mock).mockReturnValue(Promise.resolve([]));
     const { req, res } = mockRequestResponse('POST', {
       voter: '0x999999cf1046e68e36E1aA2E0E07105eDDD1f08E',

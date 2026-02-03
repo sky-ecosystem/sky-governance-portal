@@ -13,7 +13,7 @@ import { SupportedNetworks } from 'modules/web3/constants/networks';
 
 export const ABSTAIN = 0;
 
-export const MIN_SKY_REQUIRED_FOR_GASLESS_VOTING = parseEther('20');
+export const MIN_SKY_REQUIRED_FOR_GASLESS_VOTING = parseEther('2400');
 export const MIN_SKY_REQUIRED_FOR_GASLESS_VOTING_DISPLAY = parseFloat(
   formatEther(MIN_SKY_REQUIRED_FOR_GASLESS_VOTING)
 ).toLocaleString();
