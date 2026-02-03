@@ -7,18 +7,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 import { getRecentlyUsedGaslessVotingKey } from 'modules/cache/constants/cache-keys';
-import { cacheGet } from 'modules/cache/cache';
+import { cacheSetNX } from 'modules/cache/cache';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { GASLESS_RATE_LIMIT_IN_MS } from 'modules/polling/polling.constants';
 
-export async function recentlyUsedGaslessVotingCheck(
+/**
+ * Atomically checks and claims the rate limit slot for gasless voting.
+ * Returns true if user is rate limited (key already existed),
+ * false if slot was claimed successfully.
+ */
+export async function checkAndClaimGaslessVotingRateLimit(
   voter: string,
   network: SupportedNetworks
 ): Promise<boolean> {
   const cacheKey = getRecentlyUsedGaslessVotingKey(voter);
-
-  const recentlyUsedGaslessVoting = await cacheGet(cacheKey, network);
-  const cacheExpired =
-    recentlyUsedGaslessVoting && Date.now() - parseInt(recentlyUsedGaslessVoting) > GASLESS_RATE_LIMIT_IN_MS;
-  return !!recentlyUsedGaslessVoting && !cacheExpired;
+  const claimed = await cacheSetNX(cacheKey, JSON.stringify(Date.now()), network, GASLESS_RATE_LIMIT_IN_MS);
+  return !claimed; // true = rate limited (key existed), false = claimed slot
 }

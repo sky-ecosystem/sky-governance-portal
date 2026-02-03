@@ -11,10 +11,10 @@ import voteAPIHandler, { API_VOTE_ERRORS } from '../vote';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { getArbitrumPollingContractRelayProvider } from 'modules/polling/api/getArbitrumPollingContractRelayProvider';
 import { getSKYVotingWeight } from 'modules/sky/helpers/getSKYVotingWeight';
-import { cacheGet, cacheSet } from 'modules/cache/cache';
+import { cacheSet, cacheDel } from 'modules/cache/cache';
 import { getActivePollIds } from 'modules/polling/api/fetchPolls';
 import { parseEther } from 'viem';
-import { recentlyUsedGaslessVotingCheck } from 'modules/polling/helpers/recentlyUsedGaslessVotingCheck';
+import { checkAndClaimGaslessVotingRateLimit } from 'modules/polling/helpers/checkAndClaimGaslessVotingRateLimit';
 import { fetchAddressPollVoteHistory } from 'modules/polling/api/fetchAddressPollVoteHistory';
 import { postRequestToDiscord } from 'modules/app/api/postRequestToDiscord';
 import { getDelegateContractAddress } from 'modules/delegates/helpers/getDelegateContractAddress';
@@ -28,7 +28,7 @@ vi.mock('modules/sky/helpers/getSKYVotingWeight');
 vi.mock('modules/cache/cache');
 vi.mock('modules/polling/api/fetchPolls');
 vi.mock('modules/web3/helpers/verifyTypedSignature');
-vi.mock('modules/polling/helpers/recentlyUsedGaslessVotingCheck');
+vi.mock('modules/polling/helpers/checkAndClaimGaslessVotingRateLimit');
 vi.mock('modules/polling/api/fetchAddressPollVoteHistory');
 vi.mock('modules/app/api/postRequestToDiscord');
 vi.mock('modules/delegates/helpers/getDelegateContractAddress');
@@ -47,6 +47,7 @@ describe('/api/polling/vote API Endpoint', () => {
       'vote(address,uint256,uint256,uint256[],uint256[],uint8,bytes32,bytes32)': () => Promise.resolve(null)
     });
     (cacheSet as Mock).mockImplementation(() => null);
+    (cacheDel as Mock).mockImplementation(() => null);
     (fetchAddressPollVoteHistory as Mock).mockImplementation(() => Promise.resolve([]));
     (postRequestToDiscord as Mock).mockImplementation(() => Promise.resolve());
     (getDelegateContractAddress as Mock).mockImplementation(() => Promise.resolve(undefined));
@@ -202,7 +203,7 @@ describe('/api/polling/vote API Endpoint', () => {
   });
 
   it('return 400 if SKY amount is not valid', async () => {
-    (cacheGet as Mock).mockReturnValue(Promise.resolve(null));
+    (checkAndClaimGaslessVotingRateLimit as Mock).mockReturnValue(Promise.resolve(false));
     (getSKYVotingWeight as Mock).mockReturnValue(
       Promise.resolve({
         total: 0n
@@ -228,7 +229,7 @@ describe('/api/polling/vote API Endpoint', () => {
   });
 
   it('return 400 if any poll is expired', async () => {
-    (cacheGet as Mock).mockReturnValue(Promise.resolve(null));
+    (checkAndClaimGaslessVotingRateLimit as Mock).mockReturnValue(Promise.resolve(false));
     (getSKYVotingWeight as Mock).mockReturnValue(Promise.resolve(parseEther('40')));
     (getActivePollIds as Mock).mockReturnValue(Promise.resolve([]));
     const { req, res } = mockRequestResponse('POST', {
@@ -251,10 +252,7 @@ describe('/api/polling/vote API Endpoint', () => {
   });
 
   it('return 400 if it used gasless voting recently', async () => {
-    (cacheGet as Mock).mockReturnValue(Promise.resolve(null));
-    (getSKYVotingWeight as Mock).mockReturnValue(Promise.resolve(parseEther('40')));
-    (getActivePollIds as Mock).mockReturnValue(Promise.resolve([1]));
-    (recentlyUsedGaslessVotingCheck as Mock).mockReturnValue(Promise.resolve(true));
+    (checkAndClaimGaslessVotingRateLimit as Mock).mockReturnValue(Promise.resolve(true));
 
     const { req, res } = mockRequestResponse('POST', {
       voter: '0x999999cf1046e68e36E1aA2E0E07105eDDD1f08E',
@@ -277,14 +275,6 @@ describe('/api/polling/vote API Endpoint', () => {
   });
 
   it('return 400 if voter and signer do not match', async () => {
-    (cacheGet as Mock).mockReturnValue(Promise.resolve(null));
-    (recentlyUsedGaslessVotingCheck as Mock).mockReturnValue(Promise.resolve(false));
-
-    (getSKYVotingWeight as Mock).mockReturnValue(Promise.resolve(parseEther('40')));
-    (getActivePollIds as Mock).mockReturnValue(Promise.resolve([1]));
-
-    (cacheGet as Mock).mockReturnValue(Promise.resolve(null));
-
     (verifyTypedSignature as Mock).mockReturnValue(false);
 
     const { req, res } = mockRequestResponse('POST', {

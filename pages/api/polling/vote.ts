@@ -9,14 +9,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { NextApiRequest, NextApiResponse } from 'next';
 import withApiHandler from 'modules/app/api/withApiHandler';
 import { getTypedBallotData } from 'modules/web3/helpers/signTypedBallotData';
-import { cacheSet } from 'modules/cache/cache';
+import { cacheSet, cacheDel } from 'modules/cache/cache';
 import { GASLESS_RATE_LIMIT_IN_MS } from 'modules/polling/polling.constants';
 import { getRecentlyUsedGaslessVotingKey } from 'modules/cache/constants/cache-keys';
 import { config } from 'lib/config';
 import { getArbitrumPollingContractRelayProvider } from 'modules/polling/api/getArbitrumPollingContractRelayProvider';
 import logger from 'lib/logger';
 import { getActivePollIds } from 'modules/polling/api/fetchPolls';
-import { recentlyUsedGaslessVotingCheck } from 'modules/polling/helpers/recentlyUsedGaslessVotingCheck';
+import { checkAndClaimGaslessVotingRateLimit } from 'modules/polling/helpers/checkAndClaimGaslessVotingRateLimit';
 import { hasSkyRequiredVotingWeight } from 'modules/polling/helpers/hasSkyRequiredVotingWeight';
 import { MIN_SKY_REQUIRED_FOR_GASLESS_VOTING } from 'modules/polling/polling.constants';
 import { postRequestToDiscord } from 'modules/app/api/postRequestToDiscord';
@@ -32,7 +32,9 @@ import { encodeFunctionData, getAddress, parseSignature } from 'viem';
 export const API_VOTE_ERRORS = {
   VOTER_MUST_BE_STRING: 'Voter must be a string.',
   POLLIDS_MUST_BE_ARRAY_NUMBERS: 'PollIds must be an array of numbers.',
+  POLLIDS_CANNOT_BE_EMPTY: 'PollIds array cannot be empty.',
   OPTIONIDS_MUST_BE_ARRAY_NUMBERS: 'OptionIds must be an array of numbers.',
+  OPTIONIDS_CANNOT_BE_EMPTY: 'OptionIds array cannot be empty.',
   NONCE_MUST_BE_NUMBER: 'Nonce must be a number.',
   EXPIRY_MUST_BE_NUMBER: 'Expiry must be a number.',
   SIGNATURE_MUST_BE_STRING: 'Signature must be a string.',
@@ -91,9 +93,23 @@ export default withApiHandler(
         skipDiscord
       });
     }
+    if (pollIds.length === 0) {
+      await throwError({
+        error: API_VOTE_ERRORS.POLLIDS_CANNOT_BE_EMPTY,
+        body: req.body,
+        skipDiscord
+      });
+    }
     if (!Array.isArray(optionIds) || !optionIds.every(e => !isNaN(parseInt(e)))) {
       await throwError({
         error: API_VOTE_ERRORS.OPTIONIDS_MUST_BE_ARRAY_NUMBERS,
+        body: req.body,
+        skipDiscord
+      });
+    }
+    if (optionIds.length === 0) {
+      await throwError({
+        error: API_VOTE_ERRORS.OPTIONIDS_CANNOT_BE_EMPTY,
         body: req.body,
         skipDiscord
       });
@@ -151,19 +167,26 @@ export default withApiHandler(
       await throwError({ error: API_VOTE_ERRORS.VOTER_AND_SIGNER_DIFFER, body: req.body, skipDiscord });
     }
 
+    const cacheKey = getRecentlyUsedGaslessVotingKey(voter);
+
     //run eligibility checks unless backdoor secret provided
     if (!secret || secret !== config.GASLESS_BACKDOOR_SECRET) {
-      const [hasSkyRequired, activePollIds, recentlyUsedGaslessVoting, ballotHasVotedPolls] =
-        await Promise.all([
-          hasSkyRequiredVotingWeight(voter, network, MIN_SKY_REQUIRED_FOR_GASLESS_VOTING, true),
-          getActivePollIds(network),
-          recentlyUsedGaslessVotingCheck(voter, network),
-          ballotIncludesAlreadyVoted(voter, network, pollIds)
-        ]);
+      const recentlyUsedGaslessVoting = await checkAndClaimGaslessVotingRateLimit(voter, network);
+
+      //check that address hasn't used gasless service recently before doing any other checks
+      if (recentlyUsedGaslessVoting) {
+        await throwError({ error: API_VOTE_ERRORS.RATE_LIMITED, body: req.body, skipDiscord });
+      }
+
+      const [hasSkyRequired, activePollIds, ballotHasVotedPolls] = await Promise.all([
+        hasSkyRequiredVotingWeight(voter, network, MIN_SKY_REQUIRED_FOR_GASLESS_VOTING, true),
+        getActivePollIds(network),
+        ballotIncludesAlreadyVoted(voter, network, pollIds)
+      ]);
 
       //verify address has a poll weight > 0.1 SKY
       if (!hasSkyRequired) {
-        // BigInt doesnt handle decimals
+        cacheDel(cacheKey, network);
         await throwError({
           error: API_VOTE_ERRORS.LESS_THAN_MINIMUM_SKY_REQUIRED,
           body: req.body,
@@ -174,26 +197,21 @@ export default withApiHandler(
       // Verify that all the polls are active
       const areAllPollsActive = pollIds.every(pollId => activePollIds.some(pId => pId === parseInt(pollId)));
       if (!areAllPollsActive) {
+        cacheDel(cacheKey, network);
         await throwError({ error: API_VOTE_ERRORS.EXPIRED_POLLS, body: req.body, skipDiscord });
-      }
-
-      //check that address hasn't used gasless service recently
-      if (recentlyUsedGaslessVoting) {
-        await throwError({ error: API_VOTE_ERRORS.RATE_LIMITED, body: req.body, skipDiscord });
       }
 
       //can't use gasless service to vote in a poll you've already voted on
       if (ballotHasVotedPolls) {
+        cacheDel(cacheKey, network);
         await throwError({ error: API_VOTE_ERRORS.ALREADY_VOTED_IN_POLL, body: req.body, skipDiscord });
       }
     } else {
+      cacheSet(cacheKey, JSON.stringify(Date.now()), network, GASLESS_RATE_LIMIT_IN_MS);
       await postErrorInDiscord('bypassing eligibilty requirements', req.body, 'notice');
     }
 
     const { r, s, v } = parseSignature(signature);
-
-    const cacheKey = getRecentlyUsedGaslessVotingKey(voter);
-    cacheSet(cacheKey, JSON.stringify(Date.now()), network, GASLESS_RATE_LIMIT_IN_MS);
     let tx;
     try {
       const parsedPollIds = pollIds.map(pollId => BigInt(pollId));
@@ -221,7 +239,7 @@ export default withApiHandler(
       });
     } catch (err) {
       //don't rate limit if tx didn't succeed
-      cacheSet(cacheKey, '', network, GASLESS_RATE_LIMIT_IN_MS);
+      cacheDel(cacheKey, network);
       await throwError({ error: API_VOTE_ERRORS.RELAYER_ERROR, body: req.body, skipDiscord });
     }
 
