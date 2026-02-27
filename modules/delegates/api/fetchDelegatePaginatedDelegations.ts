@@ -28,19 +28,19 @@ export async function fetchDelegatePaginatedDelegations(
   const delegateId = delegateAddress.toLowerCase();
   const chainId = networkNameToChainId(network);
   const stakingEngineAddresses = [stakingEngineAddressMainnet, stakingEngineAddressTestnet];
-  
+
   const response = await gqlRequest({
     chainId,
-    query: delegateWithPaginatedDelegations,
-    variables: {
-      id: delegateId,
-      first: limit,
-      skip: offset,
-      orderBy: 'amount',
-      orderDirection: 'desc',
-      excludeAddresses: stakingEngineAddresses,
+    query: delegateWithPaginatedDelegations(
+      chainId,
+      delegateId,
+      limit,
+      offset,
+      'amount',
+      'desc',
+      stakingEngineAddresses,
       stakingEngineAddresses
-    }
+    )
   });
 
   if (!response.delegate || !response.delegate.delegations) {

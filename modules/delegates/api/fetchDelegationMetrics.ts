@@ -37,11 +37,7 @@ export async function fetchDelegationMetrics(network: SupportedNetworks): Promis
   while (hasMore) {
     const res = await gqlRequest<any>({
       chainId,
-      query: allDelegationsPaginated,
-      variables: {
-        first: pageSize,
-        skip
-      }
+      query: allDelegationsPaginated(chainId, pageSize, skip)
     });
 
     const delegations = res.delegations || [];

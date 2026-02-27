@@ -12,6 +12,7 @@ import { gqlRequest } from 'modules/gql/gqlRequest';
 import { allDelegates } from 'modules/gql/queries/subgraph/allDelegates';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { formatEther } from 'viem';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function fetchChainDelegates(
   network: SupportedNetworks
@@ -19,7 +20,7 @@ export async function fetchChainDelegates(
   const chainId = networkNameToChainId(network);
   const data = await gqlRequest({
     chainId,
-    query: allDelegates
+    query: allDelegates(chainId)
   });
 
   return data.delegates.map(d => {
@@ -30,7 +31,7 @@ export async function fetchChainDelegates(
     return {
       blockTimestamp,
       address: d.ownerAddress,
-      voteDelegateAddress: d.id,
+      voteDelegateAddress: stripChainIdPrefix(d.id),
       skyDelegated: formatEther(BigInt(totalDelegated)),
       delegations: d.delegations || [], // Include current delegations from subgraph
       lastVoteDate: d.voter?.lastVotedTimestamp ? Number(d.voter.lastVotedTimestamp) : null

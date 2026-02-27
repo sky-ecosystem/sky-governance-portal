@@ -25,6 +25,7 @@ import {
 } from 'modules/gql/queries/subgraph/arbitrumPolls';
 import { POLL_CREATOR_WHITELIST } from '../polling.constants';
 import logger from 'lib/logger';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function refetchPolls(network: SupportedNetworks): Promise<{
   pollList: PollListItem[];
@@ -37,16 +38,12 @@ export async function refetchPolls(network: SupportedNetworks): Promise<{
   let refetchSubgraph = true;
   let skip = 0;
   while (refetchSubgraph) {
+    const useWhitelist = network === SupportedNetworks.MAINNET && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'development';
     const response = await gqlRequest<Promise<{ arbitrumPolls: SubgraphPoll[] }>>({
       chainId: arbitrumChainId,
-      query:
-        network === SupportedNetworks.MAINNET && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'development'
-          ? arbitrumPollsQueryWithWhitelist
-          : arbitrumPollsQuery,
-      variables:
-        network === SupportedNetworks.MAINNET && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'development'
-          ? { argsSkip: skip, creatorWhitelist: POLL_CREATOR_WHITELIST.map(w => w.toLowerCase()) }
-          : { argsSkip: skip }
+      query: useWhitelist
+        ? arbitrumPollsQueryWithWhitelist(arbitrumChainId, skip, POLL_CREATOR_WHITELIST.map(w => w.toLowerCase()))
+        : arbitrumPollsQuery(arbitrumChainId, skip)
     });
 
     if (response.arbitrumPolls.length === 0) {
@@ -88,7 +85,8 @@ export async function refetchPolls(network: SupportedNetworks): Promise<{
 
   const pollList: PollListItem[] = subgraphPolls
     .map(poll => {
-      const { id, url, multiHash } = poll;
+      const { id: rawId, url, multiHash } = poll;
+      const id = stripChainIdPrefix(rawId);
 
       const foundPollMetadata = pollsMetadata.find(entry => {
         // Decode both paths before comparing

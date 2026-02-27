@@ -18,6 +18,7 @@ import { votingWeightHistory } from 'modules/gql/queries/subgraph/votingWeightHi
 import { formatEther } from 'viem';
 import { getSkyPortalStartDate } from 'modules/polling/polling.constants';
 import { pollTimes } from 'modules/gql/queries/subgraph/pollTimes';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 interface PollVoteResponse {
   poll: {
@@ -65,8 +66,9 @@ function getSkyWeightAtTimestamp(weightHistory: VotingWeightHistoryResponse, tim
   return relevantEntry ? relevantEntry.newBalance : '0';
 }
 
-function isValidVote(vote: PollVoteResponse, pollTimes: PollTimesResponse): boolean {
-  const poll = pollTimes.arbitrumPolls.find(p => p.id === vote.poll.id);
+function isValidVote(vote: PollVoteResponse, pollTimesData: PollTimesResponse): boolean {
+  const pollId = stripChainIdPrefix(vote.poll.id);
+  const poll = pollTimesData.arbitrumPolls.find(p => stripChainIdPrefix(p.id) === pollId);
   const voteTime = Number(vote.blockTime);
   const pollStart = Number(poll?.startDate);
   const pollEnd = Number(poll?.endDate);
@@ -81,32 +83,29 @@ async function fetchAllCurrentVotesWithSubgraph(
 ): Promise<PollTallyVote[]> {
   const addressInfo = await getAddressInfo(address, network);
   const delegateOwnerAddress = addressInfo?.delegateInfo?.address;
+  const mainnetChainId = networkNameToChainId(network);
   const arbitrumChainId = networkNameToChainId(getGaslessNetwork(network));
   const [mainnetVotes, arbitrumVotes, weightHistory] = await Promise.all([
     gqlRequest<MainnetVotesResponse>({
-      chainId: networkNameToChainId(network),
-      query: allMainnetVotes,
-      variables: { argAddress: address.toLowerCase(), startUnix }
+      chainId: mainnetChainId,
+      query: allMainnetVotes(mainnetChainId, address.toLowerCase(), startUnix)
     }),
     gqlRequest<ArbitrumVotesResponse>({
       chainId: arbitrumChainId,
-      query: allArbitrumVotes,
-      variables: {
-        argAddress: delegateOwnerAddress ? delegateOwnerAddress.toLowerCase() : address.toLowerCase(),
+      query: allArbitrumVotes(
+        arbitrumChainId,
+        delegateOwnerAddress ? delegateOwnerAddress.toLowerCase() : address.toLowerCase(),
         startUnix
-      }
+      )
     }),
     gqlRequest<VotingWeightHistoryResponse>({
-      chainId: networkNameToChainId(network),
-      query: votingWeightHistory,
-      variables: {
-        argAddress: address.toLowerCase()
-      }
+      chainId: mainnetChainId,
+      query: votingWeightHistory(mainnetChainId, address.toLowerCase())
     })
   ]);
   const mainnetVotesWithChainId = mainnetVotes.pollVotes.map(vote => ({
     ...vote,
-    chainId: networkNameToChainId(network)
+    chainId: mainnetChainId
   }));
   const arbitrumVotesWithChainId = arbitrumVotes.arbitrumPollVotes.map(vote => ({
     ...vote,
@@ -116,7 +115,7 @@ async function fetchAllCurrentVotesWithSubgraph(
 
   const dedupedVotes = Object.values(
     combinedVotes.reduce((acc, vote) => {
-      const pollId = vote.poll.id;
+      const pollId = stripChainIdPrefix(vote.poll.id);
       if (!acc[pollId] || Number(vote.blockTime) > Number(acc[pollId].blockTime)) {
         acc[pollId] = vote;
       }
@@ -126,22 +125,22 @@ async function fetchAllCurrentVotesWithSubgraph(
 
   //get the poll times for all polls voted in
   //This is a separate request because we needed to know the arbitrum poll ids first to pass in to the query
-  const allPollIds = dedupedVotes.map(p => p.poll.id);
+  const allPollIds = dedupedVotes.map(p => stripChainIdPrefix(p.poll.id));
   const pollTimesRes = await gqlRequest<PollTimesResponse>({
     chainId: arbitrumChainId,
-    query: pollTimes,
-    variables: { argPollIds: allPollIds }
+    query: pollTimes(arbitrumChainId, allPollIds)
   });
 
   const validVotes = dedupedVotes.filter(vote => isValidVote(vote, pollTimesRes));
 
   const res: PollTallyVote[] = validVotes.map(o => {
     const ballot = parseRawOptionId(o.choice);
-    const poll = pollTimesRes.arbitrumPolls.find(p => p.id === o.poll.id);
+    const pollId = stripChainIdPrefix(o.poll.id);
+    const poll = pollTimesRes.arbitrumPolls.find(p => stripChainIdPrefix(p.id) === pollId);
     const skySupport = getSkyWeightAtTimestamp(weightHistory, Number(poll?.endDate || o.blockTime));
 
     return {
-      pollId: Number(o.poll.id),
+      pollId: Number(pollId),
       ballot,
       voter: address,
       hash: o.txnHash,

@@ -14,6 +14,7 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { SkyLockedDelegateApiResponse } from '../types';
 import { formatEther } from 'viem';
 import { stakingEngineAddressMainnet, stakingEngineAddressTestnet } from 'modules/gql/gql.constants';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function fetchDelegationEventsByAddresses(
   addresses: string[],
@@ -22,19 +23,16 @@ export async function fetchDelegationEventsByAddresses(
   const engine =
     network === SupportedNetworks.TENDERLY ? stakingEngineAddressTestnet : stakingEngineAddressMainnet;
   try {
+    const chainId = networkNameToChainId(network);
     const data = await gqlRequest({
-      chainId: networkNameToChainId(network),
-      query: delegateHistoryArray,
-      variables: {
-        delegates: addresses,
-        engines: [engine.toLowerCase()]
-      }
+      chainId,
+      query: delegateHistoryArray(chainId, addresses, [engine.toLowerCase()])
     });
     const flattenedData = data.delegates.flatMap(delegate => delegate.delegationHistory);
 
     const addressData: SkyLockedDelegateApiResponse[] = flattenedData.map(x => {
       return {
-        delegateContractAddress: x.delegate.id,
+        delegateContractAddress: stripChainIdPrefix(x.delegate.id),
         immediateCaller: x.delegator,
         lockAmount: formatEther(x.amount),
         blockNumber: x.blockNumber,

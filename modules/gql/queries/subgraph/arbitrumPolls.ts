@@ -6,39 +6,44 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const arbitrumPollsQueryWithWhitelist = /* GraphQL */ `
-  query ArbitrumPollsWithWhitelist($argsSkip: Int!, $creatorWhitelist: [String!]!) {
-    arbitrumPolls(
-      first: 1000
-      skip: $argsSkip
-      where: { 
-        url_not: null, 
-        blockCreated_not: null, 
-        blockWithdrawn: null,
-        creator_in: $creatorWhitelist
-      }
-    ) {
-      id
-      url
-      multiHash
-    }
+export const arbitrumPollsQueryWithWhitelist = (chainId: number, skip: number, creatorWhitelist: string[]) => {
+  const formattedWhitelist = creatorWhitelist.map(w => `"${w}"`).join(', ');
+  return /* GraphQL */ `
+{
+  arbitrumPolls: ArbitrumPoll(
+    limit: 1000
+    offset: ${skip}
+    where: { _and: [
+      { chainId: { _eq: ${chainId} } },
+      { url: { _is_null: false } },
+      { blockCreated: { _is_null: false } },
+      { blockWithdrawn: { _is_null: true } },
+      { creator: { _in: [${formattedWhitelist}] } }
+    ] }
+  ) {
+    id
+    url
+    multiHash
   }
+}
 `;
+};
 
-export const arbitrumPollsQuery = /* GraphQL */ `
-  query ArbitrumPolls($argsSkip: Int!) {
-    arbitrumPolls(
-      first: 1000
-      skip: $argsSkip
-      where: { 
-        url_not: null, 
-        blockCreated_not: null, 
-        blockWithdrawn: null
-      }
-    ) {
-      id
-      url
-      multiHash
-    }
+export const arbitrumPollsQuery = (chainId: number, skip: number) => /* GraphQL */ `
+{
+  arbitrumPolls: ArbitrumPoll(
+    limit: 1000
+    offset: ${skip}
+    where: { _and: [
+      { chainId: { _eq: ${chainId} } },
+      { url: { _is_null: false } },
+      { blockCreated: { _is_null: false } },
+      { blockWithdrawn: { _is_null: true } }
+    ] }
+  ) {
+    id
+    url
+    multiHash
   }
+}
 `;

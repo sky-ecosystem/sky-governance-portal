@@ -7,6 +7,7 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import logger from 'lib/logger';
 import { AllDelegatesEntry } from '../types';
 import { ONE_HOUR_IN_MS } from 'modules/app/constants/time';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function fetchDelegateAddresses(network: SupportedNetworks): Promise<AllDelegatesEntry[]> {
   const cachedResponse = await cacheGet(allDelegateAddressesKey, network);
@@ -17,13 +18,13 @@ export async function fetchDelegateAddresses(network: SupportedNetworks): Promis
 
     const data = await gqlRequest({
       chainId,
-      query: allDelegates
+      query: allDelegates(chainId)
     });
 
     const delegates = data.delegates.map(delegate => ({
       blockTimestamp: new Date(Number(delegate?.blockTimestamp || 0) * 1000),
       delegate: delegate?.ownerAddress,
-      voteDelegate: delegate?.id
+      voteDelegate: stripChainIdPrefix(delegate?.id)
     })) as AllDelegatesEntry[];
 
     cacheSet(allDelegateAddressesKey, JSON.stringify(delegates), network, ONE_HOUR_IN_MS);

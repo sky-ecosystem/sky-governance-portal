@@ -16,6 +16,7 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { parseRawOptionId } from '../helpers/parseRawOptionId';
 import { formatEther } from 'viem';
 import { SupportedChainId } from 'modules/web3/constants/chainID';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 interface VoterData {
   id: string;
@@ -67,23 +68,18 @@ export async function fetchVotesByAddressForPoll(
   delegateOwnerToAddress: Record<string, string>,
   network: SupportedNetworks
 ): Promise<PollTallyVote[]> {
+  const mainnetChainId = networkNameToChainId(network);
   const arbitrumChainId =
     network === SupportedNetworks.MAINNET ? SupportedChainId.ARBITRUM : SupportedChainId.ARBITRUMTESTNET;
 
   const [mainnetVotersResponse, arbitrumVotersResponse] = await Promise.all([
     gqlRequest<MainnetVotersResponse>({
-      chainId: networkNameToChainId(network),
-      query: allMainnetVoters,
-      variables: {
-        argPollId: pollId.toString()
-      }
+      chainId: mainnetChainId,
+      query: allMainnetVoters(mainnetChainId, pollId.toString())
     }),
     gqlRequest<ArbitrumVotersResponse>({
       chainId: arbitrumChainId,
-      query: allArbitrumVoters,
-      variables: {
-        argPollId: pollId.toString()
-      }
+      query: allArbitrumVoters(arbitrumChainId, pollId.toString())
     })
   ]);
 
@@ -96,21 +92,24 @@ export async function fetchVotesByAddressForPoll(
   const isVoteWithinPollTimeframe = vote => vote.blockTime >= startUnix && vote.blockTime <= endUnix;
   const mapToDelegateAddress = (voterAddress: string) => delegateOwnerToAddress[voterAddress] || voterAddress;
 
-  const mainnetVoterAddresses = mainnetVotes.filter(isVoteWithinPollTimeframe).map(vote => vote.voter.id);
+  // Strip chainId prefix from voter IDs to get plain addresses
+  const mainnetVoterAddresses = mainnetVotes
+    .filter(isVoteWithinPollTimeframe)
+    .map(vote => stripChainIdPrefix(vote.voter.id));
   const arbitrumVoterAddresses = arbitrumVotes
     .filter(isVoteWithinPollTimeframe)
-    .map(vote => mapToDelegateAddress(vote.voter.id));
+    .map(vote => mapToDelegateAddress(stripChainIdPrefix(vote.voter.id)));
 
   const allVoterAddresses = [...mainnetVoterAddresses, ...arbitrumVoterAddresses];
 
   const addChainIdToVote = (vote, chainId) => ({ ...vote, chainId });
 
   const mainnetVotesWithChainId = mainnetVotes.map(vote =>
-    addChainIdToVote(vote, networkNameToChainId(network))
+    addChainIdToVote(vote, mainnetChainId)
   );
 
   const arbitrumVotesTaggedWithChainId = arbitrumVotes.map(vote => {
-    const mappedAddress = mapToDelegateAddress(vote.voter.id);
+    const mappedAddress = mapToDelegateAddress(stripChainIdPrefix(vote.voter.id));
     return {
       ...vote,
       chainId: arbitrumChainId,
@@ -121,7 +120,7 @@ export async function fetchVotesByAddressForPoll(
   const allVotes = [...mainnetVotesWithChainId, ...arbitrumVotesTaggedWithChainId];
   const dedupedVotes = Object.values(
     allVotes.reduce((acc, vote) => {
-      const voter = vote.voter.id;
+      const voter = stripChainIdPrefix(vote.voter.id);
       if (!acc[voter] || Number(vote.blockTime) > Number(acc[voter].blockTime)) {
         acc[voter] = vote;
       }
@@ -130,15 +129,15 @@ export async function fetchVotesByAddressForPoll(
   );
 
   const skyWeightsResponse = await gqlRequest<SkyWeightsResponse>({
-    chainId: networkNameToChainId(network),
-    query: voteAddressSkyWeightsAtTime,
-    variables: { argVoters: allVoterAddresses, argUnix: endUnix }
+    chainId: mainnetChainId,
+    query: voteAddressSkyWeightsAtTime(mainnetChainId, allVoterAddresses, endUnix)
   });
 
   const votersWithWeights = skyWeightsResponse.voters || [];
 
   const votesWithWeights = dedupedVotes.map((vote: (typeof allVotes)[0]) => {
-    const voterData = votersWithWeights.find(voter => voter.id === vote.voter.id);
+    const voterId = stripChainIdPrefix(vote.voter.id);
+    const voterData = votersWithWeights.find(voter => stripChainIdPrefix(voter.id) === voterId);
     const votingPowerChanges = voterData?.v2VotingPowerChanges || [];
     const skySupport = votingPowerChanges.length > 0 ? votingPowerChanges[0].newBalance : '0';
 
@@ -147,7 +146,7 @@ export async function fetchVotesByAddressForPoll(
       skySupport,
       ballot,
       pollId,
-      voter: vote.voter.id,
+      voter: voterId,
       chainId: vote.chainId,
       blockTimestamp: vote.blockTime,
       hash: vote.txnHash

@@ -15,6 +15,7 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { isAddress } from 'viem';
 import validateQueryParam from 'modules/app/api/validateQueryParam';
 import withApiHandler from 'modules/app/api/withApiHandler';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 /**
  * @swagger
@@ -113,15 +114,14 @@ export default withApiHandler(async (req: NextApiRequest, res: NextApiResponse) 
       const chainId = networkNameToChainId(network);
       const result = await gqlRequest<any>({
         chainId,
-        query: delegatorDelegateHistory,
-        variables: {
-          delegator: delegatorAddress.toLowerCase(),
-          delegate: address.toLowerCase()
-        }
+        query: delegatorDelegateHistory(chainId, delegatorAddress.toLowerCase(), address.toLowerCase())
       });
 
       return res.status(200).json({
-        delegationHistory: result.delegationHistories || [],
+        delegationHistory: (result.delegationHistories || []).map(entry => ({
+          ...entry,
+          delegate: entry.delegate ? { ...entry.delegate, id: stripChainIdPrefix(entry.delegate.id) } : entry.delegate
+        })),
         delegateAddress: address.toLowerCase(),
         delegatorAddress: delegatorAddress.toLowerCase()
       });

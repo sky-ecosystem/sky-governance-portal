@@ -3,19 +3,24 @@ SPDX-FileCopyrightText: © 2023 Dai Foundation <www.daifoundation.org>
 SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
-export const allSpellVotes = /* GraphQL */ `
-  query allSpellVotes($argSkip: Int, $argFirst: Int) {
-    executiveVoteV2S(first: $argFirst, skip: $argSkip, orderBy: id, orderDirection: desc) {
-      blockTime
-      spell {
-        id
-      }
-      voter {
-        id
-        v2VotingPowerChanges(first: 1, orderDirection: desc, orderBy: blockTimestamp) {
-          newBalance
-        }
+export const allSpellVotes = (chainId: number, skip: number, first: number) => /* GraphQL */ `
+{
+  executiveVoteV2S: ExecutiveVoteV2(
+    limit: ${first}
+    offset: ${skip}
+    order_by: { id: desc }
+    where: { chainId: { _eq: ${chainId} } }
+  ) {
+    blockTime
+    spell {
+      id
+    }
+    voter {
+      id
+      v2VotingPowerChanges(limit: 1, order_by: { blockTimestamp: desc }) {
+        newBalance
       }
     }
   }
+}
 `;

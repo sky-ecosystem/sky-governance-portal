@@ -6,16 +6,21 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const allMainnetVoters = /* GraphQL */ `
-  query allMainnetVoters($argPollId: String) {
-    pollVotes(where: { poll: $argPollId }) {
+export const allMainnetVoters = (chainId: number, pollId: string) => /* GraphQL */ `
+{
+  pollVotes: PollVote(
+    where: { _and: [
+      { chainId: { _eq: ${chainId} } },
+      { poll: { id: { _eq: "${chainId}-${pollId}" } } }
+    ] }
+  ) {
+    id
+    voter {
       id
-      voter {
-        id
-      }
-      blockTime
-      choice
-      txnHash
     }
+    blockTime
+    choice
+    txnHash
   }
+}
 `;

@@ -11,14 +11,7 @@ import { SupportedChain } from '../types/chain';
 import { SupportedChainId } from './chainID';
 import tenderlyTestnetData from '../../../tenderlyTestnetData.json';
 
-import {
-  TENDERLY_SUBGRAPH_URL,
-  MAINNET_STAGING_SUBGRAPH_URL,
-  MAINNET_PROD_SUBGRAPH_URL,
-  ARBITRUM_PROD_SUBGRAPH_URL,
-  ARBITRUM_STAGING_SUBGRAPH_URL,
-  ARBITRUM_TENDERLY_SUBGRAPH_URL
-} from 'modules/gql/gql.constants';
+import { STAGING_SUBGRAPH_URL, PROD_SUBGRAPH_URL } from 'modules/gql/gql.constants';
 
 export enum SupportedConnectors {
   METAMASK = 'MetaMask',
@@ -65,9 +58,7 @@ export const CHAIN_INFO: ChainInfo = {
     network: SupportedNetworks.MAINNET,
     defaultRpc: NodeProviders.TENDERLY,
     subgraphUrl:
-      process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
-        ? MAINNET_STAGING_SUBGRAPH_URL
-        : MAINNET_PROD_SUBGRAPH_URL,
+      process.env.NEXT_PUBLIC_VERCEL_ENV === 'development' ? STAGING_SUBGRAPH_URL : PROD_SUBGRAPH_URL,
     rpcs: {
       [NodeProviders.TENDERLY]: process.env.NEXT_PUBLIC_RPC_MAINNET || ''
     },
@@ -81,7 +72,7 @@ export const CHAIN_INFO: ChainInfo = {
     type: 'gasless',
     network: SupportedNetworks.ARBITRUMTESTNET,
     defaultRpc: NodeProviders.TENDERLY,
-    subgraphUrl: ARBITRUM_TENDERLY_SUBGRAPH_URL,
+    subgraphUrl: STAGING_SUBGRAPH_URL,
     rpcs: {
       [NodeProviders.TENDERLY]: process.env.NEXT_PUBLIC_RPC_ARBITRUM_TESTNET || ''
     },
@@ -96,9 +87,7 @@ export const CHAIN_INFO: ChainInfo = {
     network: SupportedNetworks.ARBITRUM,
     defaultRpc: NodeProviders.TENDERLY,
     subgraphUrl:
-      process.env.NEXT_PUBLIC_VERCEL_ENV === 'development'
-        ? ARBITRUM_STAGING_SUBGRAPH_URL
-        : ARBITRUM_PROD_SUBGRAPH_URL,
+      process.env.NEXT_PUBLIC_VERCEL_ENV === 'development' ? STAGING_SUBGRAPH_URL : PROD_SUBGRAPH_URL,
     rpcs: {
       [NodeProviders.TENDERLY]: process.env.NEXT_PUBLIC_RPC_ARBITRUM || ''
     },
@@ -112,7 +101,7 @@ export const CHAIN_INFO: ChainInfo = {
     type: 'normal',
     network: SupportedNetworks.TENDERLY,
     defaultRpc: NodeProviders.TENDERLY,
-    subgraphUrl: TENDERLY_SUBGRAPH_URL,
+    subgraphUrl: STAGING_SUBGRAPH_URL,
     rpcs: {
       [NodeProviders.TENDERLY]:
         config.USE_MOCK_WALLET && TENDERLY_RPC_URL
