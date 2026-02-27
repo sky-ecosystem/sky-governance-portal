@@ -19,6 +19,7 @@ export const pollTimes = (chainId: number, pollIds: string[]) => {
     startDate
     endDate
     id
+    pollId
   }
 }
 `;

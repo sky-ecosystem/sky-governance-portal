@@ -11,7 +11,6 @@ import { gqlRequest } from 'modules/gql/gqlRequest';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { formatEther } from 'viem';
-import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 
 export async function fetchExecutiveVoteTallyWithSubgraph(network: SupportedNetworks): Promise<Record<string, Array<{address: string, deposits: string, percent: string}>>> {
@@ -41,7 +40,7 @@ export async function fetchExecutiveVoteTallyWithSubgraph(network: SupportedNetw
     const latestVotesByVoter: Record<string, { blockTime: string; votes: any[] }> = {};
 
     for (const vote of allData) {
-        const voterId = vote.voter?.id ? stripChainIdPrefix(vote.voter.id) : undefined;
+        const voterId = vote.voter?.address;
         const blockTime = vote.blockTime || '0';
 
         if (!voterId) continue;
@@ -65,8 +64,8 @@ export async function fetchExecutiveVoteTallyWithSubgraph(network: SupportedNetw
     const formattedData: Record<string, Array<{address: string, deposits: string, percent: string}>> = {};
 
     for (const vote of mostRecentVotes) {
-        const spellId = vote.spell?.id ? stripChainIdPrefix(vote.spell.id) : undefined;
-        const voterId = vote.voter?.id ? stripChainIdPrefix(vote.voter.id) : undefined;
+        const spellId = vote.spell?.address;
+        const voterId = vote.voter?.address;
         const newBalance = vote.voter?.v2VotingPowerChanges?.[0]?.newBalance || '0';
 
         const formattedDeposit = formatEther(BigInt(newBalance));

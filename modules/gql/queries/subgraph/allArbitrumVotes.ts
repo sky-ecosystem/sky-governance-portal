@@ -18,6 +18,7 @@ export const allArbitrumVotes = (chainId: number, address: string, startUnix: nu
   ) {
     poll {
       id
+      pollId
     }
     choice
     blockTime

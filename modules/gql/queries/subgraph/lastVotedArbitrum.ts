@@ -15,6 +15,7 @@ export const lastVotedArbitrum = (chainId: number, addresses: string[]) => {
     ] }
   ) {
     id
+    address
     pollVotes(order_by: { blockTime: desc }, limit: 1) {
       blockTime
     }

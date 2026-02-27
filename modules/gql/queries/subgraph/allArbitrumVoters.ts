@@ -14,6 +14,7 @@ export const allArbitrumVoters = (chainId: number, pollId: string) => /* GraphQL
     votes {
       voter {
         id
+        address
       }
       blockTime
       choice

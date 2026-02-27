@@ -18,6 +18,7 @@ export const userDelegationToDelegate = (chainId: number, delegate: string, dele
       txnHash
       delegate {
         id
+        address
       }
       isStakingEngine
     }

@@ -17,6 +17,7 @@ export const allMainnetVoters = (chainId: number, pollId: string) => /* GraphQL 
     id
     voter {
       id
+      address
     }
     blockTime
     choice

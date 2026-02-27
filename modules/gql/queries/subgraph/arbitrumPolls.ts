@@ -22,6 +22,7 @@ export const arbitrumPollsQueryWithWhitelist = (chainId: number, skip: number, c
     ] }
   ) {
     id
+    pollId
     url
     multiHash
   }
@@ -42,6 +43,7 @@ export const arbitrumPollsQuery = (chainId: number, skip: number) => /* GraphQL 
     ] }
   ) {
     id
+    pollId
     url
     multiHash
   }

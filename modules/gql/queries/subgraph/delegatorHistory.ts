@@ -17,6 +17,7 @@ export const delegatorHistory = (chainId: number, address: string) => /* GraphQL
     accumulatedAmount
     delegate {
       id
+      address
     }
     timestamp
     txnHash

@@ -21,6 +21,7 @@ const delegateFields = /* GraphQL */ `
     amount
   }
   id
+  address
   delegators
   voter {
     lastVotedTimestamp

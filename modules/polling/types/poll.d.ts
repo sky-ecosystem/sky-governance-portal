@@ -137,6 +137,7 @@ export type PartialActivePoll = {
 
 export type SubgraphPoll = {
   id: string;
+  pollId: string;
   url: string;
   multiHash: string;
 };

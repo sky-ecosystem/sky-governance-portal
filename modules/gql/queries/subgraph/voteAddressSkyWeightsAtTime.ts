@@ -17,6 +17,7 @@ export const voteAddressSkyWeightsAtTime = (chainId: number, voters: string[], u
     ] }
   ) {
     id
+    address
     v2VotingPowerChanges(
       limit: 1
       order_by: { blockTimestamp: desc }

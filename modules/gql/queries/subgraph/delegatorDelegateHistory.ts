@@ -21,6 +21,7 @@ export const delegatorDelegateHistory = (chainId: number, delegator: string, del
     accumulatedAmount
     delegate {
       id
+      address
     }
     timestamp
     txnHash

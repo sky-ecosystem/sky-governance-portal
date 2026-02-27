@@ -18,6 +18,7 @@ export const allMainnetVotes = (chainId: number, address: string, startUnix: num
   ) {
     poll {
       id
+      pollId
     }
     choice
     blockTime

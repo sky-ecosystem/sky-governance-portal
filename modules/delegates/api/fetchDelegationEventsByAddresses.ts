@@ -14,7 +14,6 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { SkyLockedDelegateApiResponse } from '../types';
 import { formatEther } from 'viem';
 import { stakingEngineAddressMainnet, stakingEngineAddressTestnet } from 'modules/gql/gql.constants';
-import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function fetchDelegationEventsByAddresses(
   addresses: string[],
@@ -32,7 +31,7 @@ export async function fetchDelegationEventsByAddresses(
 
     const addressData: SkyLockedDelegateApiResponse[] = flattenedData.map(x => {
       return {
-        delegateContractAddress: stripChainIdPrefix(x.delegate.id),
+        delegateContractAddress: x.delegate.address,
         immediateCaller: x.delegator,
         lockAmount: formatEther(x.amount),
         blockNumber: x.blockNumber,

@@ -22,6 +22,7 @@ export const delegateWithPaginatedDelegations = (
 {
   delegate: Delegate_by_pk(id: "${chainId}-${id}") {
     id
+    address
     blockTimestamp
     blockNumber
     ownerAddress

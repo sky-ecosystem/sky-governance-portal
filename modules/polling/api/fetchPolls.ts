@@ -25,7 +25,6 @@ import {
 } from 'modules/gql/queries/subgraph/arbitrumPolls';
 import { POLL_CREATOR_WHITELIST } from '../polling.constants';
 import logger from 'lib/logger';
-import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function refetchPolls(network: SupportedNetworks): Promise<{
   pollList: PollListItem[];
@@ -85,8 +84,7 @@ export async function refetchPolls(network: SupportedNetworks): Promise<{
 
   const pollList: PollListItem[] = subgraphPolls
     .map(poll => {
-      const { id: rawId, url, multiHash } = poll;
-      const id = stripChainIdPrefix(rawId);
+      const { pollId: id, url, multiHash } = poll;
 
       const foundPollMetadata = pollsMetadata.find(entry => {
         // Decode both paths before comparing

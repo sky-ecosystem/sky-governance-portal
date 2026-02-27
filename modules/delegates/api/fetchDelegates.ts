@@ -39,7 +39,6 @@ import getDelegatesCounts from '../helpers/getDelegatesCounts';
 import { filterDelegates } from '../helpers/filterDelegates';
 import { fetchDelegationMetrics } from './fetchDelegationMetrics';
 import { formatEther } from 'viem';
-import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 function mergeDelegateInfo({
   onChainDelegate,
@@ -285,7 +284,7 @@ export async function fetchDelegatesPaginated({
   });
 
   const lastVotedArbitrumObj = lastVotedArbitrumArray.arbitrumVoters.reduce((acc, voter) => {
-    const address = stripChainIdPrefix(voter.id);
+    const address = voter.address;
     acc[address] = voter.pollVotes && voter.pollVotes.length > 0 ? Number(voter.pollVotes[0].blockTime) : 0;
     return acc;
   }, {});
@@ -310,7 +309,7 @@ export async function fetchDelegatesPaginated({
       totalDelegators: delegationMetrics.delegatorCount
     },
     delegates: combinedDelegates.map(delegate => {
-      const delegateId = stripChainIdPrefix(delegate.id);
+      const delegateId = delegate.address;
       const allDelegatesEntry = allDelegatesWithNamesAndLinks.find(del => del.voteDelegate === delegateId);
 
       const githubDelegate = githubDelegates?.find(ghDelegate => ghDelegate.name === allDelegatesEntry?.name);

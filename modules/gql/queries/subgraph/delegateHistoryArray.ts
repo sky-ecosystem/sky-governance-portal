@@ -27,6 +27,7 @@ export const delegateHistoryArray = (chainId: number, delegates: string[], engin
       txnHash
       delegate {
         id
+        address
       }
       isStakingEngine
     }

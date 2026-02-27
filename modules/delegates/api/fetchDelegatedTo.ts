@@ -14,7 +14,6 @@ import { delegatorHistory } from 'modules/gql/queries/subgraph/delegatorHistory'
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { DelegationHistory, SKYDelegatedToResponse } from '../types';
-import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function fetchDelegatedTo(
   address: string,
@@ -36,7 +35,7 @@ export async function fetchDelegatedTo(
     });
     const res: SKYDelegatedToResponse[] = data.delegationHistories.map(x => {
       return {
-        delegateContractAddress: stripChainIdPrefix(x.delegate.id),
+        delegateContractAddress: x.delegate.address,
         lockAmount: x.amount,
         blockTimestamp: new Date(parseInt(x.timestamp) * 1000).toISOString(),
         hash: x.txnHash,
@@ -63,7 +62,7 @@ export async function fetchDelegatedTo(
           });
         } else {
           const delegatingTo = delegates.find(
-            i => stripChainIdPrefix(i?.id)?.toLowerCase() === delegateContractAddress.toLowerCase()
+            i => i?.address?.toLowerCase() === delegateContractAddress.toLowerCase()
           );
 
           if (!delegatingTo) {

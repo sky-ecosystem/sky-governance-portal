@@ -14,9 +14,11 @@ export const allSpellVotes = (chainId: number, skip: number, first: number) => /
     blockTime
     spell {
       id
+      address
     }
     voter {
       id
+      address
       v2VotingPowerChanges(limit: 1, order_by: { blockTimestamp: desc }) {
         newBalance
       }

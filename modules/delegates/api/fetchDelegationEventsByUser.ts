@@ -13,7 +13,6 @@ import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { SkyLockedDelegateApiResponse } from '../types';
 import { formatEther } from 'viem';
-import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function fetchDelegationEventsByUser(
   delegateAddress: string,
@@ -35,7 +34,7 @@ export async function fetchDelegationEventsByUser(
 
     const addressData: SkyLockedDelegateApiResponse[] = delegationHistory.map(x => {
       return {
-        delegateContractAddress: stripChainIdPrefix(x.delegate.id),
+        delegateContractAddress: x.delegate.address,
         immediateCaller: x.delegator,
         lockAmount: formatEther(x.amount),
         blockNumber: x.blockNumber,

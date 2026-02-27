@@ -18,6 +18,7 @@ export const allDelegatesExecSupport = (chainId: number) => /* GraphQL */ `
     blockTimestamp
     ownerAddress
     id
+    address
     totalDelegated
     voter {
       lastVotedTimestamp

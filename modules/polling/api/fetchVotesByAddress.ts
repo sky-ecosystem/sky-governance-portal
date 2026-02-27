@@ -16,10 +16,10 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { parseRawOptionId } from '../helpers/parseRawOptionId';
 import { formatEther } from 'viem';
 import { SupportedChainId } from 'modules/web3/constants/chainID';
-import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 interface VoterData {
   id: string;
+  address: string;
 }
 
 interface VoteData {
@@ -56,6 +56,7 @@ interface VotingPowerChange {
 
 interface VoterWithWeight {
   id: string;
+  address: string;
   v2VotingPowerChanges: VotingPowerChange[];
 }
 
@@ -95,10 +96,10 @@ export async function fetchVotesByAddressForPoll(
   // Strip chainId prefix from voter IDs to get plain addresses
   const mainnetVoterAddresses = mainnetVotes
     .filter(isVoteWithinPollTimeframe)
-    .map(vote => stripChainIdPrefix(vote.voter.id));
+    .map(vote => vote.voter.address);
   const arbitrumVoterAddresses = arbitrumVotes
     .filter(isVoteWithinPollTimeframe)
-    .map(vote => mapToDelegateAddress(stripChainIdPrefix(vote.voter.id)));
+    .map(vote => mapToDelegateAddress(vote.voter.address));
 
   const allVoterAddresses = [...mainnetVoterAddresses, ...arbitrumVoterAddresses];
 
@@ -109,7 +110,7 @@ export async function fetchVotesByAddressForPoll(
   );
 
   const arbitrumVotesTaggedWithChainId = arbitrumVotes.map(vote => {
-    const mappedAddress = mapToDelegateAddress(stripChainIdPrefix(vote.voter.id));
+    const mappedAddress = mapToDelegateAddress(vote.voter.address);
     return {
       ...vote,
       chainId: arbitrumChainId,
@@ -120,9 +121,9 @@ export async function fetchVotesByAddressForPoll(
   const allVotes = [...mainnetVotesWithChainId, ...arbitrumVotesTaggedWithChainId];
   const dedupedVotes = Object.values(
     allVotes.reduce((acc, vote) => {
-      const voter = stripChainIdPrefix(vote.voter.id);
-      if (!acc[voter] || Number(vote.blockTime) > Number(acc[voter].blockTime)) {
-        acc[voter] = vote;
+      const voterAddr = vote.voter.address || vote.voter.id;
+      if (!acc[voterAddr] || Number(vote.blockTime) > Number(acc[voterAddr].blockTime)) {
+        acc[voterAddr] = vote;
       }
       return acc;
     }, {} as Record<string, (typeof allVotes)[0]>)
@@ -136,8 +137,8 @@ export async function fetchVotesByAddressForPoll(
   const votersWithWeights = skyWeightsResponse.voters || [];
 
   const votesWithWeights = dedupedVotes.map((vote: (typeof allVotes)[0]) => {
-    const voterId = stripChainIdPrefix(vote.voter.id);
-    const voterData = votersWithWeights.find(voter => stripChainIdPrefix(voter.id) === voterId);
+    const voterId = vote.voter.address || vote.voter.id;
+    const voterData = votersWithWeights.find(voter => voter.address === voterId);
     const votingPowerChanges = voterData?.v2VotingPowerChanges || [];
     const skySupport = votingPowerChanges.length > 0 ? votingPowerChanges[0].newBalance : '0';
 
