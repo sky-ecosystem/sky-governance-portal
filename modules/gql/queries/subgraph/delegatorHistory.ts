@@ -10,7 +10,7 @@ export const delegatorHistory = (chainId: number, address: string) => /* GraphQL
     limit: 1000,
     where: { _and: [
       { chainId: { _eq: ${chainId} } },
-      { delegator: { _eq: "${address}" } }
+      { delegator: { _ilike: "${address}" } }
     ] }
   ) {
     amount

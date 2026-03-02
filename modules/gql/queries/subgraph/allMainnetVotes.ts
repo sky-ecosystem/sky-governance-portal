@@ -11,7 +11,7 @@ export const allMainnetVotes = (chainId: number, address: string, startUnix: num
   pollVotes: PollVote(
     where: { _and: [
       { chainId: { _eq: ${chainId} } },
-      { voter: { id: { _eq: "${chainId}-${address}" } } },
+      { voter: { id: { _ilike: "${chainId}-${address}" } } },
       { blockTime: { _gt: "${startUnix}" } }
     ] }
     limit: 1000

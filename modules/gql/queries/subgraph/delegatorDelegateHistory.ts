@@ -12,8 +12,8 @@ export const delegatorDelegateHistory = (chainId: number, delegator: string, del
     limit: 1000,
     where: { _and: [
       { chainId: { _eq: ${chainId} } },
-      { delegator: { _eq: "${delegator}" } },
-      { delegate: { id: { _eq: "${chainId}-${delegate}" } } }
+      { delegator: { _ilike: "${delegator}" } },
+      { delegate: { id: { _ilike: "${chainId}-${delegate}" } } }
     ] }
     order_by: { timestamp: desc }
   ) {

@@ -11,7 +11,7 @@ export const votingWeightHistory = (chainId: number, address: string) => /* Grap
   executiveVotingPowerChangeV2S: ExecutiveVotingPowerChangeV2(
     where: { _and: [
       { chainId: { _eq: ${chainId} } },
-      { voter: { id: { _eq: "${chainId}-${address}" } } }
+      { voter: { id: { _ilike: "${chainId}-${address}" } } }
     ] }
   ) {
     blockTimestamp
