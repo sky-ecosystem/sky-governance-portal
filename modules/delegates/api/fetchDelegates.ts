@@ -208,29 +208,31 @@ export async function fetchDelegatesPaginated({
 
   // Build Hasura where conditions
   // Note: Envio entity IDs are prefixed with chainId (e.g. "1-0xabc..."), so we must prefix addresses when filtering by id
-  const prefixId = (a: string) => `"${chainId}-${a}"`;
+  // We use _ilike/_nilike for case-insensitive address matching since Envio stores addresses with inconsistent casing
+  const ilikeId = (a: string) => `{ id: { _ilike: "${chainId}-${a}" } }`;
+  const nilikeId = (a: string) => `{ id: { _nilike: "${chainId}-${a}" } }`;
   const baseConditions: string[] = ['{ version: { _eq: "3" } }'];
   if (searchTerm) {
-    const addrs = filteredDelegateAddresses.map(prefixId).join(', ');
-    baseConditions.push(`{ id: { _in: [${addrs}] } }`);
+    const addrs = filteredDelegateAddresses.map(ilikeId).join(', ');
+    baseConditions.push(`{ _or: [${addrs}] }`);
     if (delegateType === DelegateTypeEnum.ALIGNED) {
-      const aligned = alignedDelegatesAddresses.map(prefixId).join(', ');
-      baseConditions.push(`{ id: { _in: [${aligned}] } }`);
-      const notIn = alignedDelegatesAddressesForNotInQuery.map(prefixId).join(', ');
-      baseConditions.push(`{ id: { _nin: [${notIn}] } }`);
+      const aligned = alignedDelegatesAddresses.map(ilikeId).join(', ');
+      baseConditions.push(`{ _or: [${aligned}] }`);
+      const notIn = alignedDelegatesAddressesForNotInQuery.map(nilikeId).join(', ');
+      baseConditions.push(`{ _and: [${notIn}] }`);
     }
   } else if (delegateType === DelegateTypeEnum.ALIGNED) {
-    const aligned = alignedDelegatesAddresses.map(prefixId).join(', ');
-    baseConditions.push(`{ id: { _in: [${aligned}] } }`);
+    const aligned = alignedDelegatesAddresses.map(ilikeId).join(', ');
+    baseConditions.push(`{ _or: [${aligned}] }`);
   } else if (delegateType === DelegateTypeEnum.SHADOW) {
-    const notIn = alignedDelegatesAddressesForNotInQuery.map(prefixId).join(', ');
-    baseConditions.push(`{ id: { _nin: [${notIn}] } }`);
+    const notIn = alignedDelegatesAddressesForNotInQuery.map(nilikeId).join(', ');
+    baseConditions.push(`{ _and: [${notIn}] }`);
   }
 
-  const alignedCondition = `{ id: { _in: [${alignedDelegatesAddresses.map(prefixId).join(', ')}] } }`;
-  const shadowCondition = `{ id: { _nin: [${alignedDelegatesAddressesForNotInQuery
-    .map(prefixId)
-    .join(', ')}] } }`;
+  const alignedCondition = `{ _or: [${alignedDelegatesAddresses.map(ilikeId).join(', ')}] }`;
+  const shadowCondition = `{ _and: [${alignedDelegatesAddressesForNotInQuery
+    .map(nilikeId)
+    .join(', ')}] }`;
 
   const alignedWhereConditions = buildDelegateWhereConditions(baseConditions, [alignedCondition]);
   const shadowWhereConditions = buildDelegateWhereConditions(baseConditions, [shadowCondition]);

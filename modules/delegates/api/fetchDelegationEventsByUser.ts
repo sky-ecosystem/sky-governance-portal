@@ -26,11 +26,13 @@ export async function fetchDelegationEventsByUser(
       query: userDelegationToDelegate(chainId, delegateAddress.toLowerCase(), userAddress.toLowerCase())
     });
 
-    if (!data.delegate) {
+    const delegate = data.delegate?.[0];
+
+    if (!delegate) {
       return [];
     }
 
-    const delegationHistory = data.delegate.delegationHistory;
+    const delegationHistory = delegate.delegationHistory;
 
     const addressData: SkyLockedDelegateApiResponse[] = delegationHistory.map(x => {
       return {

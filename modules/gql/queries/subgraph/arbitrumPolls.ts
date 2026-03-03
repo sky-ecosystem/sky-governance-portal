@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 export const arbitrumPollsQueryWithWhitelist = (chainId: number, skip: number, creatorWhitelist: string[]) => {
-  const formattedWhitelist = creatorWhitelist.map(w => `"${w}"`).join(', ');
+  const formattedWhitelist = creatorWhitelist.map(w => `{ creator: { _ilike: "${w}" } }`).join(', ');
   return /* GraphQL */ `
 {
   arbitrumPolls: ArbitrumPoll(
@@ -18,7 +18,7 @@ export const arbitrumPollsQueryWithWhitelist = (chainId: number, skip: number, c
       { url: { _is_null: false } },
       { blockCreated: { _is_null: false } },
       { blockWithdrawn: { _is_null: true } },
-      { creator: { _in: [${formattedWhitelist}] } }
+      { _or: [${formattedWhitelist}] }
     ] }
   ) {
     id

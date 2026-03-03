@@ -11,7 +11,7 @@ export const allDelegationsPaginated = (chainId: number, first: number, skip: nu
     where: { _and: [
       { chainId: { _eq: ${chainId} } },
       { delegate: { version: { _eq: "3" } } },
-      { delegator: { _nin: ["0xce01c90de7fd1bcfa39e237fe6d8d9f569e8a6a3", "0xb1fc11f03b084fff8dae95fa08e8d69ad2547ec1"] } }
+      { _and: [{ delegator: { _nilike: "0xce01c90de7fd1bcfa39e237fe6d8d9f569e8a6a3" } }, { delegator: { _nilike: "0xb1fc11f03b084fff8dae95fa08e8d69ad2547ec1" } }] }
     ] }
   ) {
     delegator
