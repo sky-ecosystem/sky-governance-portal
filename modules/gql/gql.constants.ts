@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 /* Envio HyperIndex URLs */
 
-const ENVIO_HYPERINDEX_URL = 'https://indexer.dev.hyperindex.xyz/ce1359e/v1/graphql';
+const ENVIO_HYPERINDEX_URL = 'https://indexer.dev.hyperindex.xyz/8f55a37/v1/graphql';
 
 export const STAGING_SUBGRAPH_URL = ENVIO_HYPERINDEX_URL;
 export const PROD_SUBGRAPH_URL = ENVIO_HYPERINDEX_URL;
