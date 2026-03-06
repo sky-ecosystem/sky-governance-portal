@@ -62,7 +62,6 @@ function mergeDelegateInfo({
     skyDelegated: onChainDelegate.skyDelegated,
     proposalsSupported: onChainDelegate.proposalsSupported,
     execSupported: undefined,
-    delegations: onChainDelegate.delegations, // Include current delegations from subgraph
     blockTimestamp: onChainDelegate.blockTimestamp
   };
 }
@@ -352,11 +351,6 @@ export async function fetchDelegatesPaginated({
 
       const lastVoteTimestamp = Math.max(lastVoteMainnet, lastVoteArbitrum);
 
-      const totalDelegated: bigint = delegate.delegations.reduce(
-        (acc, curr) => acc + BigInt(curr?.amount || 0n),
-        0n
-      );
-
       return {
         name: githubDelegate?.name || 'Shadow Delegate',
         voteDelegateAddress: delegateId,
@@ -366,7 +360,7 @@ export async function fetchDelegatesPaginated({
         picture: githubDelegate?.picture,
         communication: githubDelegate?.communication,
         combinedParticipation: githubDelegate?.combinedParticipation,
-        skyDelegated: formatEther(totalDelegated),
+        skyDelegated: formatEther(BigInt(delegate.totalDelegated || '0')),
         delegatorCount: delegate.delegators,
         lastVoteDate: lastVoteTimestamp > 0 ? new Date(lastVoteTimestamp * 1000) : null,
         proposalsSupported: votedProposals?.length || 0,

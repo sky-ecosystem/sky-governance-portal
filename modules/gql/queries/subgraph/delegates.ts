@@ -10,16 +10,7 @@ const delegateFields = /* GraphQL */ `
   blockTimestamp
   blockNumber
   ownerAddress
-  delegations(
-    limit: 1000
-    where: { _and: [
-      { _and: [{ delegator: { _nilike: "0xce01c90de7fd1bcfa39e237fe6d8d9f569e8a6a3" } }, { delegator: { _nilike: "0xb1fc11f03b084fff8dae95fa08e8d69ad2547ec1" } }] },
-      { amount: { _gt: "0" } }
-    ] }
-  ) {
-    delegator
-    amount
-  }
+  totalDelegated
   id
   address
   delegators

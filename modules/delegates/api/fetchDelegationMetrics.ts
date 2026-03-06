@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 import { gqlRequest } from 'modules/gql/gqlRequest';
-import { allDelegationsPaginated } from 'modules/gql/queries/subgraph/allDelegations';
+import { allDelegates } from 'modules/gql/queries/subgraph/allDelegates';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { formatEther } from 'viem';
@@ -17,40 +17,26 @@ interface DelegationMetrics {
   delegatorCount: number;
 }
 
-interface Delegation {
-  delegator: string;
-  delegate: {
-    id: string;
-    version: string;
-  };
-  amount: string;
+interface Delegate {
+  totalDelegated: string;
+  delegators: number;
 }
 
 export async function fetchDelegationMetrics(network: SupportedNetworks): Promise<DelegationMetrics> {
   const chainId = networkNameToChainId(network);
-  const pageSize = 1000;
-  let skip = 0;
-  let hasMore = true;
-  const allDelegations: Delegation[] = [];
 
-  // Fetch all delegations using pagination
-  while (hasMore) {
-    const res = await gqlRequest<any>({
-      chainId,
-      query: allDelegationsPaginated(chainId, pageSize, skip)
-    });
+  const res = await gqlRequest<{ delegates: Delegate[] }>({
+    chainId,
+    query: allDelegates(chainId)
+  });
 
-    const delegations = res.delegations || [];
-    allDelegations.push(...delegations);
+  const delegates = res.delegates || [];
 
-    // Check if there are more results to fetch
-    hasMore = delegations.length === pageSize;
-    skip += pageSize;
-  }
-
-  // Calculate metrics from all delegations
-  const totalSkyDelegated = formatEther(allDelegations.reduce((acc, cur) => acc + BigInt(cur.amount), 0n));
-  const delegatorCount = allDelegations.filter(d => BigInt(d.amount) > 0n).length;
+  // Sum totalDelegated and delegators across all delegates
+  const totalSkyDelegated = formatEther(
+    delegates.reduce((acc, cur) => acc + BigInt(cur.totalDelegated || '0'), 0n)
+  );
+  const delegatorCount = delegates.reduce((acc, cur) => acc + (cur.delegators || 0), 0);
 
   return {
     totalSkyDelegated,
