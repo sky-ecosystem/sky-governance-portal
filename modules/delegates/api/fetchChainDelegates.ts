@@ -32,7 +32,6 @@ export async function fetchChainDelegates(
       address: d.ownerAddress,
       voteDelegateAddress: d.address,
       skyDelegated: formatEther(BigInt(totalDelegated)),
-      delegations: d.delegations || [], // Include current delegations from subgraph
       lastVoteDate: d.voter?.lastVotedTimestamp ? Number(d.voter.lastVotedTimestamp) : null
     };
   });
