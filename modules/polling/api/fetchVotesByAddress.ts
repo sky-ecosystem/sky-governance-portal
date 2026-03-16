@@ -85,11 +85,12 @@ export async function fetchVotesByAddressForPoll(
     })
   ]);
 
-  const startUnix = arbitrumVotersResponse.arbitrumPoll.startDate;
-  const endUnix = arbitrumVotersResponse.arbitrumPoll.endDate;
+  const arbitrumPoll = arbitrumVotersResponse.arbitrumPoll;
+  const startUnix = arbitrumPoll?.startDate ?? Number.NEGATIVE_INFINITY;
+  const endUnix = arbitrumPoll?.endDate ?? Number.POSITIVE_INFINITY;
 
-  const mainnetVotes = mainnetVotersResponse.pollVotes;
-  const arbitrumVotes = arbitrumVotersResponse.arbitrumPoll.votes;
+  const mainnetVotes = mainnetVotersResponse.pollVotes || [];
+  const arbitrumVotes = arbitrumPoll?.votes || [];
 
   const isVoteWithinPollTimeframe = vote => vote.blockTime >= startUnix && vote.blockTime <= endUnix;
   const getVoterAddress = (voter: VoterData | VoterWithWeight) =>
