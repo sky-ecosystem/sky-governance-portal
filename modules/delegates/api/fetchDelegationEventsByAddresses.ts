@@ -22,19 +22,16 @@ export async function fetchDelegationEventsByAddresses(
   const engine =
     network === SupportedNetworks.TENDERLY ? stakingEngineAddressTestnet : stakingEngineAddressMainnet;
   try {
+    const chainId = networkNameToChainId(network);
     const data = await gqlRequest({
-      chainId: networkNameToChainId(network),
-      query: delegateHistoryArray,
-      variables: {
-        delegates: addresses,
-        engines: [engine.toLowerCase()]
-      }
+      chainId,
+      query: delegateHistoryArray(chainId, addresses, [engine.toLowerCase()])
     });
     const flattenedData = data.delegates.flatMap(delegate => delegate.delegationHistory);
 
     const addressData: SkyLockedDelegateApiResponse[] = flattenedData.map(x => {
       return {
-        delegateContractAddress: x.delegate.id,
+        delegateContractAddress: x.delegate.address,
         immediateCaller: x.delegator,
         lockAmount: formatEther(x.amount),
         blockNumber: x.blockNumber,

@@ -17,13 +17,13 @@ export async function fetchDelegateAddresses(network: SupportedNetworks): Promis
 
     const data = await gqlRequest({
       chainId,
-      query: allDelegates
+      query: allDelegates(chainId)
     });
 
     const delegates = data.delegates.map(delegate => ({
       blockTimestamp: new Date(Number(delegate?.blockTimestamp || 0) * 1000),
       delegate: delegate?.ownerAddress,
-      voteDelegate: delegate?.id
+      voteDelegate: delegate?.address
     })) as AllDelegatesEntry[];
 
     cacheSet(allDelegateAddressesKey, JSON.stringify(delegates), network, ONE_HOUR_IN_MS);

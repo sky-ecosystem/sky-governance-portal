@@ -62,7 +62,6 @@ function mergeDelegateInfo({
     skyDelegated: onChainDelegate.skyDelegated,
     proposalsSupported: onChainDelegate.proposalsSupported,
     execSupported: undefined,
-    delegations: onChainDelegate.delegations, // Include current delegations from subgraph
     blockTimestamp: onChainDelegate.blockTimestamp
   };
 }
@@ -172,6 +171,11 @@ export async function fetchDelegatesInfo(
   return delegatesInfo;
 }
 
+// Helper to build Hasura where condition strings for delegate filters
+function buildDelegateWhereConditions(baseConditions: string[], additionalConditions: string[]): string[] {
+  return [...baseConditions, ...additionalConditions];
+}
+
 export async function fetchDelegatesPaginated({
   network,
   pageSize,
@@ -195,60 +199,70 @@ export async function fetchDelegatesPaginated({
   const { alignedDelegatesCount, shadowDelegatesCount, totalDelegatesCount } =
     getDelegatesCounts(filteredDelegateEntries);
 
-  // If there are no aligned delegates, the id_not_in filter will filter out everything if we give it an empty array
+  // If there are no aligned delegates, the _nin filter will filter out everything if we give it an empty array
   const alignedDelegatesAddressesForNotInQuery =
     alignedDelegatesAddresses.length > 0
       ? alignedDelegatesAddresses
       : ['0x0000000000000000000000000000000000000000'];
 
-  const baseDelegatesQueryFilter: any = { and: [{ version: '3' }] };
+  // Build Hasura where conditions
+  // Note: Envio entity IDs are prefixed with chainId (e.g. "1-0xabc..."), so we must prefix addresses when filtering by id
+  // We use _ilike/_nilike for case-insensitive address matching since Envio stores addresses with inconsistent casing
+  const ilikeId = (a: string) => `{ id: { _ilike: "${chainId}-${a}" } }`;
+  const nilikeId = (a: string) => `{ id: { _nilike: "${chainId}-${a}" } }`;
+  const baseConditions: string[] = ['{ version: { _eq: "3" } }'];
   if (searchTerm) {
-    baseDelegatesQueryFilter.and.push({ id_in: filteredDelegateAddresses });
+    const addrs = filteredDelegateAddresses.map(ilikeId).join(', ');
+    baseConditions.push(`{ _or: [${addrs}] }`);
     if (delegateType === DelegateTypeEnum.ALIGNED) {
-      baseDelegatesQueryFilter.and.push({ id_in: alignedDelegatesAddresses });
-      baseDelegatesQueryFilter.and.push({ id_not_in: alignedDelegatesAddressesForNotInQuery });
+      const aligned = alignedDelegatesAddresses.map(ilikeId).join(', ');
+      baseConditions.push(`{ _or: [${aligned}] }`);
+      const notIn = alignedDelegatesAddressesForNotInQuery.map(nilikeId).join(', ');
+      baseConditions.push(`{ _and: [${notIn}] }`);
     }
   } else if (delegateType === DelegateTypeEnum.ALIGNED) {
-    baseDelegatesQueryFilter.and.push({ id_in: alignedDelegatesAddresses });
+    const aligned = alignedDelegatesAddresses.map(ilikeId).join(', ');
+    baseConditions.push(`{ _or: [${aligned}] }`);
   } else if (delegateType === DelegateTypeEnum.SHADOW) {
-    baseDelegatesQueryFilter.and.push({ id_not_in: alignedDelegatesAddressesForNotInQuery });
+    const notIn = alignedDelegatesAddressesForNotInQuery.map(nilikeId).join(', ');
+    baseConditions.push(`{ _and: [${notIn}] }`);
   }
 
-  //get all aligned delegates (that match the filter)for the first page
-  const alignedFilterFirstPage = {
-    and: [...(baseDelegatesQueryFilter.and || []), { id_in: alignedDelegatesAddresses }]
-  };
-  //use this for subsequent pages as well as part of the first page
-  const shadowFilterFirstPage = {
-    and: [...(baseDelegatesQueryFilter.and || []), { id_not_in: alignedDelegatesAddressesForNotInQuery }]
-  };
+  const alignedCondition = `{ _or: [${alignedDelegatesAddresses.map(ilikeId).join(', ')}] }`;
+  const shadowCondition = `{ _and: [${alignedDelegatesAddressesForNotInQuery
+    .map(nilikeId)
+    .join(', ')}] }`;
+
+  const alignedWhereConditions = buildDelegateWhereConditions(baseConditions, [alignedCondition]);
+  const shadowWhereConditions = buildDelegateWhereConditions(baseConditions, [shadowCondition]);
 
   const queryOrderBy = orderBy === DelegateOrderByEnum.RANDOM ? DelegateOrderByEnum.SKY : orderBy;
 
-  const delegatesQueryFirstPageVariables = {
-    first: pageSize,
-    orderBy: queryOrderBy,
-    orderDirection,
-    alignedFilter: alignedFilterFirstPage,
-    shadowFilter: shadowFilterFirstPage,
-    alignedDelegates: alignedDelegatesAddresses
-  };
-
-  const delegatesQuerySubsequentPagesVariables = {
-    first: pageSize,
-    skip: (page - 1) * pageSize,
-    orderBy: queryOrderBy,
-    orderDirection,
-    filter: shadowFilterFirstPage
-  };
+  const query =
+    page === 1
+      ? delegatesQueryFirstPage({
+          chainId,
+          limit: pageSize,
+          orderBy: queryOrderBy,
+          orderDirection,
+          shadowWhereConditions,
+          alignedWhereConditions
+        })
+      : delegatesQuerySubsequentPages({
+          chainId,
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+          orderBy: queryOrderBy,
+          orderDirection,
+          whereConditions: shadowWhereConditions
+        });
 
   const [githubExecutives, delegatesExecSupport, delegatesQueryRes, delegationMetrics] = await Promise.all([
     getGithubExecutives(network),
     fetchDelegatesExecSupport(network),
     gqlRequest<any>({
       chainId,
-      query: page === 1 ? delegatesQueryFirstPage : delegatesQuerySubsequentPages,
-      variables: page === 1 ? delegatesQueryFirstPageVariables : delegatesQuerySubsequentPagesVariables
+      query
     }),
     fetchDelegationMetrics(network)
   ]);
@@ -264,14 +278,15 @@ export async function fetchDelegatesPaginated({
     delegate.ownerAddress.toLowerCase()
   );
 
+  const gaslessChainId = networkNameToChainId(getGaslessNetwork(network));
   const lastVotedArbitrumArray = await gqlRequest<any>({
-    chainId: networkNameToChainId(getGaslessNetwork(network)),
-    query: lastVotedArbitrum,
-    variables: { argAddresses: combinedDelegateOwnerAddresses }
+    chainId: gaslessChainId,
+    query: lastVotedArbitrum(gaslessChainId, combinedDelegateOwnerAddresses)
   });
 
   const lastVotedArbitrumObj = lastVotedArbitrumArray.arbitrumVoters.reduce((acc, voter) => {
-    acc[voter.id] = voter.pollVotes && voter.pollVotes.length > 0 ? Number(voter.pollVotes[0].blockTime) : 0;
+    const address = voter.address;
+    acc[address] = voter.pollVotes && voter.pollVotes.length > 0 ? Number(voter.pollVotes[0].blockTime) : 0;
     return acc;
   }, {});
 
@@ -295,12 +310,13 @@ export async function fetchDelegatesPaginated({
       totalDelegators: delegationMetrics.delegatorCount
     },
     delegates: combinedDelegates.map(delegate => {
-      const allDelegatesEntry = allDelegatesWithNamesAndLinks.find(del => del.voteDelegate === delegate.id);
+      const delegateId = delegate.address;
+      const allDelegatesEntry = allDelegatesWithNamesAndLinks.find(del => del.voteDelegate === delegateId);
 
       const githubDelegate = githubDelegates?.find(ghDelegate => ghDelegate.name === allDelegatesEntry?.name);
 
       const votedProposals = delegatesExecSupport.data?.find(
-        del => del.voteDelegate === delegate.id
+        del => del.voteDelegate === delegateId
       )?.votedProposals;
       const execSupported = githubExecutives.find(proposal =>
         votedProposals?.find(vp => vp.toLowerCase() === proposal?.address?.toLowerCase())
@@ -335,21 +351,16 @@ export async function fetchDelegatesPaginated({
 
       const lastVoteTimestamp = Math.max(lastVoteMainnet, lastVoteArbitrum);
 
-      const totalDelegated: bigint = delegate.delegations.reduce(
-        (acc, curr) => acc + BigInt(curr?.amount || 0n),
-        0n
-      );
-
       return {
         name: githubDelegate?.name || 'Shadow Delegate',
-        voteDelegateAddress: delegate.id,
+        voteDelegateAddress: delegateId,
         address: delegate.ownerAddress,
         status: githubDelegate ? DelegateStatusEnum.aligned : DelegateStatusEnum.shadow,
         creationDate: finalCreationDate,
         picture: githubDelegate?.picture,
         communication: githubDelegate?.communication,
         combinedParticipation: githubDelegate?.combinedParticipation,
-        skyDelegated: formatEther(totalDelegated),
+        skyDelegated: formatEther(BigInt(delegate.totalDelegated || '0')),
         delegatorCount: delegate.delegators,
         lastVoteDate: lastVoteTimestamp > 0 ? new Date(lastVoteTimestamp * 1000) : null,
         proposalsSupported: votedProposals?.length || 0,

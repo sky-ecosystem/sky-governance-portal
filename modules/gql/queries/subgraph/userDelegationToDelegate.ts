@@ -6,21 +6,22 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const userDelegationToDelegate = /* GraphQL */ `
-  query userDelegationToDelegate($delegate: String!, $delegator: String!) {
-    delegate(id: $delegate) {
-      delegationHistory(first: 1000, where: {delegator: $delegator}) {
-        amount
-        accumulatedAmount
-        delegator
-        blockNumber
-        timestamp
-        txnHash
-        delegate {
-          id
-        }
-        isStakingEngine
+export const userDelegationToDelegate = (chainId: number, delegate: string, delegator: string) => /* GraphQL */ `
+{
+  delegate: Delegate(where: { id: { _ilike: "${chainId}-${delegate}" } }, limit: 1) {
+    delegationHistory(limit: 1000, where: { delegator: { _ilike: "${delegator}" } }) {
+      amount
+      accumulatedAmount
+      delegator
+      blockNumber
+      timestamp
+      txnHash
+      delegate {
+        id
+        address
       }
+      isStakingEngine
     }
   }
+}
 `;

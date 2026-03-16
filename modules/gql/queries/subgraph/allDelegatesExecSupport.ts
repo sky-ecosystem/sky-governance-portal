@@ -6,19 +6,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const allDelegatesExecSupport = /* GraphQL */ `
-  {
-    delegates(first: 1000, where: {version: "3"}) {
-      blockTimestamp
-      ownerAddress
-      id
-      totalDelegated
-      voter {
-        lastVotedTimestamp
-        currentSpellsV2 {
-          id
-        }
-      }
+export const allDelegatesExecSupport = (chainId: number) => /* GraphQL */ `
+{
+  delegates: Delegate(
+    limit: 1000,
+    where: { _and: [
+      { chainId: { _eq: ${chainId} } },
+      { version: { _eq: "3" } }
+    ] }
+  ) {
+    blockTimestamp
+    ownerAddress
+    id
+    address
+    totalDelegated
+    voter {
+      lastVotedTimestamp
+      currentSpellsV2
     }
   }
+}
 `;

@@ -7,6 +7,7 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import logger from 'lib/logger';
 import { DelegateExecSupport } from '../types';
 import { TEN_MINUTES_IN_MS } from 'modules/app/constants/time';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 export async function fetchDelegatesExecSupport(network: SupportedNetworks): Promise<{
   error: boolean;
@@ -25,12 +26,12 @@ export async function fetchDelegatesExecSupport(network: SupportedNetworks): Pro
 
     const data = await gqlRequest({
       chainId,
-      query: allDelegatesExecSupport
+      query: allDelegatesExecSupport(chainId)
     });
 
     const delegatesExecSupport: DelegateExecSupport[] = data.delegates.map(delegate => ({
-      voteDelegate: delegate.id,
-      votedProposals: delegate.voter.currentSpellsV2.map(spell => spell.id)
+      voteDelegate: delegate.address,
+      votedProposals: (delegate.voter?.currentSpellsV2 || []).map(stripChainIdPrefix)
     }));
 
     cacheSet(allDelegatesExecSupportKey, JSON.stringify(delegatesExecSupport), network, TEN_MINUTES_IN_MS);

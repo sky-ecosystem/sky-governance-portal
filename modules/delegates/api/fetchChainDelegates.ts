@@ -19,7 +19,7 @@ export async function fetchChainDelegates(
   const chainId = networkNameToChainId(network);
   const data = await gqlRequest({
     chainId,
-    query: allDelegates
+    query: allDelegates(chainId)
   });
 
   return data.delegates.map(d => {
@@ -30,9 +30,8 @@ export async function fetchChainDelegates(
     return {
       blockTimestamp,
       address: d.ownerAddress,
-      voteDelegateAddress: d.id,
+      voteDelegateAddress: d.address,
       skyDelegated: formatEther(BigInt(totalDelegated)),
-      delegations: d.delegations || [], // Include current delegations from subgraph
       lastVoteDate: d.voter?.lastVotedTimestamp ? Number(d.voter.lastVotedTimestamp) : null
     };
   });

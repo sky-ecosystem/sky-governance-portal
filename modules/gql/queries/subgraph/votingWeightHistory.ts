@@ -6,11 +6,16 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const votingWeightHistory = /* GraphQL */ `
-  query VotingWeightHistory($argAddress: String){
-    executiveVotingPowerChangeV2S(where: {voter: $argAddress}){
-			blockTimestamp
-      newBalance
-    }
-    }
+export const votingWeightHistory = (chainId: number, address: string) => /* GraphQL */ `
+{
+  executiveVotingPowerChangeV2S: ExecutiveVotingPowerChangeV2(
+    where: { _and: [
+      { chainId: { _eq: ${chainId} } },
+      { voter: { id: { _ilike: "${chainId}-${address}" } } }
+    ] }
+  ) {
+    blockTimestamp
+    newBalance
+  }
+}
 `;

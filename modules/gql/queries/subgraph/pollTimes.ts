@@ -6,12 +6,21 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const pollTimes = /* GraphQL */ `
-    query pollTimes($argPollIds: [String!]){
-        arbitrumPolls(where: {id_in: $argPollIds}){
-        startDate
-        endDate
-        id
-        }
-    }
+export const pollTimes = (chainId: number, pollIds: string[]) => {
+  const prefixedIds = pollIds.map(id => `"${chainId}-${id}"`).join(', ');
+  return /* GraphQL */ `
+{
+  arbitrumPolls: ArbitrumPoll(
+    where: { _and: [
+      { chainId: { _eq: ${chainId} } },
+      { id: { _in: [${prefixedIds}] } }
+    ] }
+  ) {
+    startDate
+    endDate
+    id
+    pollId
+  }
+}
 `;
+};

@@ -28,31 +28,33 @@ export async function fetchDelegatePaginatedDelegations(
   const delegateId = delegateAddress.toLowerCase();
   const chainId = networkNameToChainId(network);
   const stakingEngineAddresses = [stakingEngineAddressMainnet, stakingEngineAddressTestnet];
-  
+
   const response = await gqlRequest({
     chainId,
-    query: delegateWithPaginatedDelegations,
-    variables: {
-      id: delegateId,
-      first: limit,
-      skip: offset,
-      orderBy: 'amount',
-      orderDirection: 'desc',
-      excludeAddresses: stakingEngineAddresses,
+    query: delegateWithPaginatedDelegations(
+      chainId,
+      delegateId,
+      limit,
+      offset,
+      'amount',
+      'desc',
+      stakingEngineAddresses,
       stakingEngineAddresses
-    }
+    )
   });
 
-  if (!response.delegate || !response.delegate.delegations) {
+  const delegate = response.delegate?.[0];
+
+  if (!delegate || !delegate.delegations) {
     return {
       delegations: [],
       total: 0
     };
   }
 
-  const formattedDelegations = formatCurrentDelegations(response.delegate.delegations);
-  const totalDelegators = response.delegate.delegators || 0;
-  const hasStakingEngine = response.delegate.stakingEngineDelegations?.length > 0;
+  const formattedDelegations = formatCurrentDelegations(delegate.delegations);
+  const totalDelegators = delegate.delegators || 0;
+  const hasStakingEngine = delegate.stakingEngineDelegations?.length > 0;
   const adjustedTotal = hasStakingEngine ? Math.max(0, totalDelegators - 1) : totalDelegators;
 
   return {
