@@ -16,10 +16,11 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { parseRawOptionId } from '../helpers/parseRawOptionId';
 import { formatEther } from 'viem';
 import { SupportedChainId } from 'modules/web3/constants/chainID';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 interface VoterData {
   id: string;
-  address: string;
+  address?: string;
 }
 
 interface VoteData {
@@ -56,7 +57,7 @@ interface VotingPowerChange {
 
 interface VoterWithWeight {
   id: string;
-  address: string;
+  address?: string;
   v2VotingPowerChanges: VotingPowerChange[];
 }
 
@@ -91,19 +92,21 @@ export async function fetchVotesByAddressForPoll(
   const arbitrumVotes = arbitrumVotersResponse.arbitrumPoll.votes;
 
   const isVoteWithinPollTimeframe = vote => vote.blockTime >= startUnix && vote.blockTime <= endUnix;
+  const getVoterAddress = (voter: VoterData | VoterWithWeight) =>
+    voter.address || stripChainIdPrefix(voter.id);
   const mapToDelegateAddress = (voterAddress: string) => delegateOwnerToAddress[voterAddress] || voterAddress;
 
   // Normalize voters to the delegate contract address used for dedupe and weight lookup.
   const mainnetVoterAddresses = mainnetVotes
     .filter(isVoteWithinPollTimeframe)
-    .map(vote => vote.voter.address);
+    .map(vote => getVoterAddress(vote.voter));
   const arbitrumVoterAddresses = arbitrumVotes
     .filter(isVoteWithinPollTimeframe)
-    .map(vote => mapToDelegateAddress(vote.voter.address));
+    .map(vote => mapToDelegateAddress(getVoterAddress(vote.voter)));
 
   const allVoterAddresses = [...mainnetVoterAddresses, ...arbitrumVoterAddresses];
 
-  const normalizeVoteVoterAddress = (vote, chainId, voterAddress = vote.voter.address) => ({
+  const normalizeVoteVoterAddress = (vote, chainId, voterAddress = getVoterAddress(vote.voter)) => ({
     ...vote,
     chainId,
     voter: { ...vote.voter, id: voterAddress, address: voterAddress }
@@ -114,7 +117,7 @@ export async function fetchVotesByAddressForPoll(
   );
 
   const arbitrumVotesTaggedWithChainId = arbitrumVotes.map(vote => {
-    const mappedAddress = mapToDelegateAddress(vote.voter.address);
+    const mappedAddress = mapToDelegateAddress(getVoterAddress(vote.voter));
     return normalizeVoteVoterAddress(vote, arbitrumChainId, mappedAddress);
   });
 
@@ -138,7 +141,7 @@ export async function fetchVotesByAddressForPoll(
 
   const votesWithWeights = dedupedVotes.map((vote: (typeof allVotes)[0]) => {
     const voterId = vote.voter.address;
-    const voterData = votersWithWeights.find(voter => voter.address === voterId);
+    const voterData = votersWithWeights.find(voter => getVoterAddress(voter) === voterId);
     const votingPowerChanges = voterData?.v2VotingPowerChanges || [];
     const skySupport = votingPowerChanges.length > 0 ? votingPowerChanges[0].newBalance : '0';
 
