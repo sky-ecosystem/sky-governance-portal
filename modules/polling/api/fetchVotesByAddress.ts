@@ -16,9 +16,11 @@ import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { parseRawOptionId } from '../helpers/parseRawOptionId';
 import { formatEther } from 'viem';
 import { SupportedChainId } from 'modules/web3/constants/chainID';
+import { stripChainIdPrefix } from 'modules/gql/gqlUtils';
 
 interface VoterData {
   id: string;
+  address?: string;
 }
 
 interface VoteData {
@@ -55,6 +57,7 @@ interface VotingPowerChange {
 
 interface VoterWithWeight {
   id: string;
+  address?: string;
   v2VotingPowerChanges: VotingPowerChange[];
 }
 
@@ -67,78 +70,79 @@ export async function fetchVotesByAddressForPoll(
   delegateOwnerToAddress: Record<string, string>,
   network: SupportedNetworks
 ): Promise<PollTallyVote[]> {
+  const mainnetChainId = networkNameToChainId(network);
   const arbitrumChainId =
     network === SupportedNetworks.MAINNET ? SupportedChainId.ARBITRUM : SupportedChainId.ARBITRUMTESTNET;
 
   const [mainnetVotersResponse, arbitrumVotersResponse] = await Promise.all([
     gqlRequest<MainnetVotersResponse>({
-      chainId: networkNameToChainId(network),
-      query: allMainnetVoters,
-      variables: {
-        argPollId: pollId.toString()
-      }
+      chainId: mainnetChainId,
+      query: allMainnetVoters(mainnetChainId, pollId.toString())
     }),
     gqlRequest<ArbitrumVotersResponse>({
       chainId: arbitrumChainId,
-      query: allArbitrumVoters,
-      variables: {
-        argPollId: pollId.toString()
-      }
+      query: allArbitrumVoters(arbitrumChainId, pollId.toString())
     })
   ]);
 
-  const startUnix = arbitrumVotersResponse.arbitrumPoll.startDate;
-  const endUnix = arbitrumVotersResponse.arbitrumPoll.endDate;
+  const arbitrumPoll = arbitrumVotersResponse.arbitrumPoll;
+  const startUnix = arbitrumPoll?.startDate ?? Number.NEGATIVE_INFINITY;
+  const endUnix = arbitrumPoll?.endDate ?? Number.POSITIVE_INFINITY;
 
-  const mainnetVotes = mainnetVotersResponse.pollVotes;
-  const arbitrumVotes = arbitrumVotersResponse.arbitrumPoll.votes;
+  const mainnetVotes = mainnetVotersResponse.pollVotes || [];
+  const arbitrumVotes = arbitrumPoll?.votes || [];
 
   const isVoteWithinPollTimeframe = vote => vote.blockTime >= startUnix && vote.blockTime <= endUnix;
+  const getVoterAddress = (voter: VoterData | VoterWithWeight) =>
+    voter.address || stripChainIdPrefix(voter.id);
   const mapToDelegateAddress = (voterAddress: string) => delegateOwnerToAddress[voterAddress] || voterAddress;
 
-  const mainnetVoterAddresses = mainnetVotes.filter(isVoteWithinPollTimeframe).map(vote => vote.voter.id);
+  // Normalize voters to the delegate contract address used for dedupe and weight lookup.
+  const mainnetVoterAddresses = mainnetVotes
+    .filter(isVoteWithinPollTimeframe)
+    .map(vote => getVoterAddress(vote.voter));
   const arbitrumVoterAddresses = arbitrumVotes
     .filter(isVoteWithinPollTimeframe)
-    .map(vote => mapToDelegateAddress(vote.voter.id));
+    .map(vote => mapToDelegateAddress(getVoterAddress(vote.voter)));
 
   const allVoterAddresses = [...mainnetVoterAddresses, ...arbitrumVoterAddresses];
 
-  const addChainIdToVote = (vote, chainId) => ({ ...vote, chainId });
+  const normalizeVoteVoterAddress = (vote, chainId, voterAddress = getVoterAddress(vote.voter)) => ({
+    ...vote,
+    chainId,
+    voter: { ...vote.voter, id: voterAddress, address: voterAddress }
+  });
 
   const mainnetVotesWithChainId = mainnetVotes.map(vote =>
-    addChainIdToVote(vote, networkNameToChainId(network))
+    normalizeVoteVoterAddress(vote, mainnetChainId)
   );
 
   const arbitrumVotesTaggedWithChainId = arbitrumVotes.map(vote => {
-    const mappedAddress = mapToDelegateAddress(vote.voter.id);
-    return {
-      ...vote,
-      chainId: arbitrumChainId,
-      voter: { ...vote.voter, id: mappedAddress }
-    };
+    const mappedAddress = mapToDelegateAddress(getVoterAddress(vote.voter));
+    return normalizeVoteVoterAddress(vote, arbitrumChainId, mappedAddress);
   });
 
   const allVotes = [...mainnetVotesWithChainId, ...arbitrumVotesTaggedWithChainId];
   const dedupedVotes = Object.values(
     allVotes.reduce((acc, vote) => {
-      const voter = vote.voter.id;
-      if (!acc[voter] || Number(vote.blockTime) > Number(acc[voter].blockTime)) {
-        acc[voter] = vote;
+      const voterAddr = vote.voter.address;
+      if (!acc[voterAddr] || Number(vote.blockTime) > Number(acc[voterAddr].blockTime)) {
+        acc[voterAddr] = vote;
       }
       return acc;
     }, {} as Record<string, (typeof allVotes)[0]>)
   );
 
   const skyWeightsResponse = await gqlRequest<SkyWeightsResponse>({
-    chainId: networkNameToChainId(network),
-    query: voteAddressSkyWeightsAtTime,
-    variables: { argVoters: allVoterAddresses, argUnix: endUnix }
+    chainId: mainnetChainId,
+    query: voteAddressSkyWeightsAtTime(mainnetChainId, allVoterAddresses, endUnix)
   });
 
   const votersWithWeights = skyWeightsResponse.voters || [];
 
   const votesWithWeights = dedupedVotes.map((vote: (typeof allVotes)[0]) => {
-    const voterData = votersWithWeights.find(voter => voter.id === vote.voter.id);
+    const voterId = vote.voter.address;
+    const voterData = votersWithWeights.find(voter => getVoterAddress(voter) === voterId);
     const votingPowerChanges = voterData?.v2VotingPowerChanges || [];
     const skySupport = votingPowerChanges.length > 0 ? votingPowerChanges[0].newBalance : '0';
 
@@ -147,7 +151,7 @@ export async function fetchVotesByAddressForPoll(
       skySupport,
       ballot,
       pollId,
-      voter: vote.voter.id,
+      voter: voterId,
       chainId: vote.chainId,
       blockTimestamp: vote.blockTime,
       hash: vote.txnHash

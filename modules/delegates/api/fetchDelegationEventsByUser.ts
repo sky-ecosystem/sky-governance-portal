@@ -20,24 +20,23 @@ export async function fetchDelegationEventsByUser(
   network: SupportedNetworks
 ): Promise<SkyLockedDelegateApiResponse[]> {
   try {
+    const chainId = networkNameToChainId(network);
     const data = await gqlRequest({
-      chainId: networkNameToChainId(network),
-      query: userDelegationToDelegate,
-      variables: {
-        delegate: delegateAddress.toLowerCase(),
-        delegator: userAddress.toLowerCase()
-      }
+      chainId,
+      query: userDelegationToDelegate(chainId, delegateAddress.toLowerCase(), userAddress.toLowerCase())
     });
-    
-    if (!data.delegate) {
+
+    const delegate = data.delegate?.[0];
+
+    if (!delegate) {
       return [];
     }
-    
-    const delegationHistory = data.delegate.delegationHistory;
+
+    const delegationHistory = delegate.delegationHistory;
 
     const addressData: SkyLockedDelegateApiResponse[] = delegationHistory.map(x => {
       return {
-        delegateContractAddress: x.delegate.id,
+        delegateContractAddress: x.delegate.address,
         immediateCaller: x.delegator,
         lockAmount: formatEther(x.amount),
         blockNumber: x.blockNumber,

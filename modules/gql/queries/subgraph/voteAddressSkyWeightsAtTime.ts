@@ -6,18 +6,26 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const voteAddressSkyWeightsAtTime = /* GraphQL */ `
-  query voteAddressSkyWeightsAtTime($argVoters: [String!]!, $argUnix: BigInt!) {
-    voters(where: { id_in: $argVoters }) {
-      id
-      v2VotingPowerChanges(
-        first: 1
-        orderDirection: desc
-        orderBy: blockTimestamp
-        where: { blockTimestamp_lte: $argUnix }
-      ) {
-        newBalance
-      }
+export const voteAddressSkyWeightsAtTime = (chainId: number, voters: string[], unix: number) => {
+  const prefixedVoters = voters.map(v => `{ id: { _ilike: "${chainId}-${v}" } }`).join(', ');
+  return /* GraphQL */ `
+query voteAddressSkyWeightsAtTime {
+  voters: Voter(
+    where: { _and: [
+      { chainId: { _eq: ${chainId} } },
+      { _or: [${prefixedVoters}] }
+    ] }
+  ) {
+    id
+    address
+    v2VotingPowerChanges(
+      limit: 1
+      order_by: { blockTimestamp: desc }
+      where: { blockTimestamp: { _lte: "${unix}" } }
+    ) {
+      newBalance
     }
   }
+}
 `;
+};

@@ -6,20 +6,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-/* Subgraph URLs */
+/* Envio HyperIndex URLs */
 
-export const TENDERLY_SUBGRAPH_URL =
-  'https://query-subgraph-staging.sky.money/subgraphs/name/jetstreamgg/sky-subgraph-testnet';
-export const MAINNET_STAGING_SUBGRAPH_URL =
-  'https://query-subgraph-staging.sky.money/subgraphs/name/jetstreamgg/sky-subgraph-mainnet';
-export const MAINNET_PROD_SUBGRAPH_URL =
-  'https://query-subgraph.sky.money/subgraphs/name/jetstreamgg/sky-subgraph-mainnet';
-export const ARBITRUM_TENDERLY_SUBGRAPH_URL =
-  'https://query-subgraph-staging.sky.money/subgraphs/name/jetstreamgg/sky-subgraph-arbitrum-testnet';
-export const ARBITRUM_STAGING_SUBGRAPH_URL =
-  'https://query-subgraph-staging.sky.money/subgraphs/name/jetstreamgg/sky-subgraph-arbitrum';
-export const ARBITRUM_PROD_SUBGRAPH_URL =
-  'https://query-subgraph.sky.money/subgraphs/name/jetstreamgg/sky-subgraph-arbitrum';
+const ENVIO_HYPERINDEX_URL = 'https://indexer.hyperindex.xyz/e2d9944/v1/graphql';
+
+export const STAGING_SUBGRAPH_URL = ENVIO_HYPERINDEX_URL;
+export const PROD_SUBGRAPH_URL = ENVIO_HYPERINDEX_URL;
 
 export const stakingEngineAddressMainnet = '0xce01c90de7fd1bcfa39e237fe6d8d9f569e8a6a3';
 export const stakingEngineAddressTestnet = '0xce01c90de7fd1bcfa39e237fe6d8d9f569e8a6a3';

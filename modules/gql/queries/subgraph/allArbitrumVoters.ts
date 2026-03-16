@@ -6,19 +6,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-export const allArbitrumVoters = /* GraphQL */ `
-  query allArbitrumVoters($argPollId: String) {
-    arbitrumPoll(id: $argPollId) {
-      startDate
-      endDate
-      votes {
-        voter {
-          id
-        }
-        blockTime
-        choice
-        txnHash
+export const allArbitrumVoters = (chainId: number, pollId: string) => /* GraphQL */ `
+query allArbitrumVoters {
+  arbitrumPoll: ArbitrumPoll_by_pk(id: "${chainId}-${pollId}") {
+    startDate
+    endDate
+    votes {
+      voter {
+        id
+        address
       }
+      blockTime
+      choice
+      txnHash
     }
   }
+}
 `;
