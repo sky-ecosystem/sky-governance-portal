@@ -93,7 +93,7 @@ export async function fetchVotesByAddressForPoll(
   const isVoteWithinPollTimeframe = vote => vote.blockTime >= startUnix && vote.blockTime <= endUnix;
   const mapToDelegateAddress = (voterAddress: string) => delegateOwnerToAddress[voterAddress] || voterAddress;
 
-  // Strip chainId prefix from voter IDs to get plain addresses
+  // Normalize voters to the delegate contract address used for dedupe and weight lookup.
   const mainnetVoterAddresses = mainnetVotes
     .filter(isVoteWithinPollTimeframe)
     .map(vote => vote.voter.address);
@@ -103,25 +103,25 @@ export async function fetchVotesByAddressForPoll(
 
   const allVoterAddresses = [...mainnetVoterAddresses, ...arbitrumVoterAddresses];
 
-  const addChainIdToVote = (vote, chainId) => ({ ...vote, chainId });
+  const normalizeVoteVoterAddress = (vote, chainId, voterAddress = vote.voter.address) => ({
+    ...vote,
+    chainId,
+    voter: { ...vote.voter, id: voterAddress, address: voterAddress }
+  });
 
   const mainnetVotesWithChainId = mainnetVotes.map(vote =>
-    addChainIdToVote(vote, mainnetChainId)
+    normalizeVoteVoterAddress(vote, mainnetChainId)
   );
 
   const arbitrumVotesTaggedWithChainId = arbitrumVotes.map(vote => {
     const mappedAddress = mapToDelegateAddress(vote.voter.address);
-    return {
-      ...vote,
-      chainId: arbitrumChainId,
-      voter: { ...vote.voter, id: mappedAddress }
-    };
+    return normalizeVoteVoterAddress(vote, arbitrumChainId, mappedAddress);
   });
 
   const allVotes = [...mainnetVotesWithChainId, ...arbitrumVotesTaggedWithChainId];
   const dedupedVotes = Object.values(
     allVotes.reduce((acc, vote) => {
-      const voterAddr = vote.voter.address || vote.voter.id;
+      const voterAddr = vote.voter.address;
       if (!acc[voterAddr] || Number(vote.blockTime) > Number(acc[voterAddr].blockTime)) {
         acc[voterAddr] = vote;
       }
@@ -137,7 +137,7 @@ export async function fetchVotesByAddressForPoll(
   const votersWithWeights = skyWeightsResponse.voters || [];
 
   const votesWithWeights = dedupedVotes.map((vote: (typeof allVotes)[0]) => {
-    const voterId = vote.voter.address || vote.voter.id;
+    const voterId = vote.voter.address;
     const voterData = votersWithWeights.find(voter => voter.address === voterId);
     const votingPowerChanges = voterData?.v2VotingPowerChanges || [];
     const skySupport = votingPowerChanges.length > 0 ? votingPowerChanges[0].newBalance : '0';

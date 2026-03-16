@@ -350,6 +350,12 @@ export async function fetchDelegatesPaginated({
       const lastVoteArbitrum = lastVotedArbitrumObj[delegate.ownerAddress.toLowerCase()] || 0;
 
       const lastVoteTimestamp = Math.max(lastVoteMainnet, lastVoteArbitrum);
+      const totalDelegated = (delegate.delegations || []).reduce(
+        (acc, curr) => acc + BigInt(curr?.amount || '0'),
+        0n
+      );
+      const hasStakingEngineDelegation = (delegate.stakingEngineDelegations || []).length > 0;
+      const delegatorCount = Math.max(0, (delegate.delegators || 0) - (hasStakingEngineDelegation ? 1 : 0));
 
       return {
         name: githubDelegate?.name || 'Shadow Delegate',
@@ -360,8 +366,8 @@ export async function fetchDelegatesPaginated({
         picture: githubDelegate?.picture,
         communication: githubDelegate?.communication,
         combinedParticipation: githubDelegate?.combinedParticipation,
-        skyDelegated: formatEther(BigInt(delegate.totalDelegated || '0')),
-        delegatorCount: delegate.delegators,
+        skyDelegated: formatEther(totalDelegated),
+        delegatorCount,
         lastVoteDate: lastVoteTimestamp > 0 ? new Date(lastVoteTimestamp * 1000) : null,
         proposalsSupported: votedProposals?.length || 0,
         execSupported: execSupported && { title: execSupported.title, address: execSupported.address }

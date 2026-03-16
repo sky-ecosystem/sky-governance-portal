@@ -6,10 +6,35 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
+import { stakingEngineAddressMainnet, stakingEngineAddressTestnet } from 'modules/gql/gql.constants';
+
+const stakingEngineAddresses = Array.from(
+  new Set([stakingEngineAddressMainnet, stakingEngineAddressTestnet])
+);
+const stakingEngineExclusionFilters = stakingEngineAddresses
+  .map(address => `{ delegator: { _nilike: "${address}" } }`)
+  .join(', ');
+const stakingEngineInclusionFilters = stakingEngineAddresses
+  .map(address => `{ delegator: { _ilike: "${address}" } }`)
+  .join(', ');
+
 const delegateFields = /* GraphQL */ `
   blockTimestamp
   blockNumber
   ownerAddress
+  delegations(
+    limit: 1000
+    where: { _and: [
+      { _and: [${stakingEngineExclusionFilters}] },
+      { amount: { _gt: "0" } }
+    ] }
+  ) {
+    delegator
+    amount
+  }
+  stakingEngineDelegations: delegations(where: { _or: [${stakingEngineInclusionFilters}] }) {
+    delegator
+  }
   totalDelegated
   id
   address
