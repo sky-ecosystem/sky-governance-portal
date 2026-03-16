@@ -350,12 +350,13 @@ export async function fetchDelegatesPaginated({
       const lastVoteArbitrum = lastVotedArbitrumObj[delegate.ownerAddress.toLowerCase()] || 0;
 
       const lastVoteTimestamp = Math.max(lastVoteMainnet, lastVoteArbitrum);
-      const totalDelegated = (delegate.delegations || []).reduce(
+      const stakingEngineDelegated = (delegate.stakingEngineDelegations || []).reduce(
         (acc, curr) => acc + BigInt(curr?.amount || '0'),
         0n
       );
-      const hasStakingEngineDelegation = (delegate.stakingEngineDelegations || []).length > 0;
-      const delegatorCount = Math.max(0, (delegate.delegators || 0) - (hasStakingEngineDelegation ? 1 : 0));
+      const stakingEngineDelegatorCount = (delegate.stakingEngineDelegations || []).length;
+      const totalDelegated = BigInt(delegate.totalDelegated || '0') - stakingEngineDelegated;
+      const delegatorCount = Math.max(0, (delegate.delegators || 0) - stakingEngineDelegatorCount);
 
       return {
         name: githubDelegate?.name || 'Shadow Delegate',

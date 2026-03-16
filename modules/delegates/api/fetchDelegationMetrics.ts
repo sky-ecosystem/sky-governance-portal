@@ -7,7 +7,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 import { gqlRequest } from 'modules/gql/gqlRequest';
-import { allDelegationsPaginated } from 'modules/gql/queries/subgraph/allDelegations';
+import { allDelegates } from 'modules/gql/queries/subgraph/allDelegates';
+import { stakingEngineDelegations } from 'modules/gql/queries/subgraph/allDelegations';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { formatEther } from 'viem';
@@ -18,40 +19,41 @@ interface DelegationMetrics {
 }
 
 interface Delegate {
-  id: string;
-  version: string;
+  totalDelegated: string;
+  delegators: number;
 }
 
-interface Delegation {
-  delegator: string;
+interface StakingEngineDelegation {
   delegate: Delegate;
   amount: string;
 }
 
 export async function fetchDelegationMetrics(network: SupportedNetworks): Promise<DelegationMetrics> {
   const chainId = networkNameToChainId(network);
-  const pageSize = 1000;
-  let offset = 0;
-  let hasMore = true;
-  const allDelegations: Delegation[] = [];
-
-  while (hasMore) {
-    const res = await gqlRequest<{ delegations: Delegation[] }>({
+  const [delegatesRes, stakingEngineDelegationsRes] = await Promise.all([
+    gqlRequest<{ delegates: Delegate[] }>({
       chainId,
-      query: allDelegationsPaginated(chainId, pageSize, offset)
-    });
+      query: allDelegates(chainId)
+    }),
+    gqlRequest<{ delegations: StakingEngineDelegation[] }>({
+      chainId,
+      query: stakingEngineDelegations(chainId)
+    })
+  ]);
 
-    const delegations = res.delegations || [];
-    allDelegations.push(...delegations);
-
-    hasMore = delegations.length === pageSize;
-    offset += pageSize;
-  }
+  const delegates = delegatesRes.delegates || [];
+  const stakingDelegations = stakingEngineDelegationsRes.delegations || [];
+  const totalDelegated = delegates.reduce((acc, cur) => acc + BigInt(cur.totalDelegated || '0'), 0n);
+  const totalDelegators = delegates.reduce((acc, cur) => acc + (cur.delegators || 0), 0);
+  const stakingEngineDelegated = stakingDelegations.reduce(
+    (acc, cur) => acc + BigInt(cur.amount || '0'),
+    0n
+  );
 
   const totalSkyDelegated = formatEther(
-    allDelegations.reduce((acc, cur) => acc + BigInt(cur.amount || '0'), 0n)
+    totalDelegated - stakingEngineDelegated
   );
-  const delegatorCount = allDelegations.filter(delegation => BigInt(delegation.amount || '0') > 0n).length;
+  const delegatorCount = Math.max(0, totalDelegators - stakingDelegations.length);
 
   return {
     totalSkyDelegated,

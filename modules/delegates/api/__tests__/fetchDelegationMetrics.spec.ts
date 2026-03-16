@@ -19,27 +19,39 @@ describe('fetchDelegationMetrics', () => {
     vi.clearAllMocks();
   });
 
-  it('paginates delegations and queries with the staking engine excluded', async () => {
+  it('subtracts staking engine delegations from aggregate totals', async () => {
     (gqlRequest as Mock)
       .mockResolvedValueOnce({
-        delegations: Array.from({ length: 1000 }, (_, index) => ({
-          delegator: `0x${index.toString(16).padStart(40, '0')}`,
-          delegate: { id: '1-0xdelegate', version: '3' },
-          amount: '1000000000000000000'
-        }))
+        delegates: [
+          {
+            totalDelegated: '10000000000000000000',
+            delegators: 2
+          },
+          {
+            totalDelegated: '20000000000000000000',
+            delegators: 1
+          }
+        ]
       })
       .mockResolvedValueOnce({
-        delegations: []
+        delegations: [
+          {
+            delegate: {
+              totalDelegated: '10000000000000000000',
+              delegators: 2
+            },
+            amount: '3000000000000000000'
+          }
+        ]
       });
 
     const metrics = await fetchDelegationMetrics(SupportedNetworks.MAINNET);
 
     expect(metrics).toEqual({
-      totalSkyDelegated: '1000',
-      delegatorCount: 1000
+      totalSkyDelegated: '27',
+      delegatorCount: 2
     });
     expect((gqlRequest as Mock).mock.calls).toHaveLength(2);
-    expect((gqlRequest as Mock).mock.calls[0][0].query).toContain(stakingEngineAddressMainnet);
-    expect((gqlRequest as Mock).mock.calls[1][0].query).toContain('offset: 1000');
+    expect((gqlRequest as Mock).mock.calls[1][0].query).toContain(stakingEngineAddressMainnet);
   });
 });

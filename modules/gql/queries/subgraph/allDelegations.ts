@@ -12,21 +12,19 @@ const stakingEngineAddresses = Array.from(
   new Set([stakingEngineAddressMainnet, stakingEngineAddressTestnet])
 );
 
-export const allDelegationsPaginated = (chainId: number, limit: number, offset: number) => /* GraphQL */ `
+export const stakingEngineDelegations = (chainId: number) => /* GraphQL */ `
 {
   delegations: Delegation(
-    limit: ${limit}
-    offset: ${offset}
     where: { _and: [
       { chainId: { _eq: ${chainId} } },
       { delegate: { version: { _eq: "3" } } },
-      { delegator: { _nin: ["${stakingEngineAddresses.join('", "')}"] } }
+      { delegator: { _in: ["${stakingEngineAddresses.join('", "')}"] } },
+      { amount: { _gt: "0" } }
     ] }
   ) {
-    delegator
     delegate {
-      id
-      version
+      totalDelegated
+      delegators
     }
     amount
   }
