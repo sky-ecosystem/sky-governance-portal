@@ -6,6 +6,8 @@ settings:
 
 overrides:
   elliptic: ^6.6.1
+  axios@1.14.1: 1.13.2
+  axios@0.30.4: 0.21.4
 
 importers:
 
@@ -2587,8 +2589,8 @@ packages:
   axios@0.21.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
 
-  axios@1.12.2:
-    resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
+  axios@1.13.2:
+    resolution: {integrity: sha512-VPk9ebNqPcy5lRGuSlKx752IlDatOjT9paPlm8A7yOuW2Fbvp4X3JznJtT4f0GzGLLiWE9W8onz51SqLYwzGaA==}
 
   axobject-query@3.2.1:
     resolution: {integrity: sha512-jsyHu61e6N4Vbz/v18DHwWYKK0bSWLqn47eeDSKPB7m8tqMHF9YJ+mhIk2lVteyZrY8tnSj/jHOv4YiTCuCJgg==}
@@ -8713,7 +8715,7 @@ snapshots:
       '@swagger-api/apidom-core': 1.0.0-beta.51
       '@swagger-api/apidom-error': 1.0.0-beta.51
       '@types/ramda': 0.30.2
-      axios: 1.12.2(debug@4.4.0)
+      axios: 1.13.2(debug@4.4.0)
       minimatch: 7.4.6
       process: 0.11.10
       ramda: 0.30.1
@@ -9962,7 +9964,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.12.2(debug@4.4.0):
+  axios@1.13.2(debug@4.4.0):
     dependencies:
       follow-redirects: 1.15.6(debug@4.4.0)
       form-data: 4.0.4
