@@ -10,9 +10,6 @@ type SystemConfig = {
   USE_CACHE: string;
   TRACING_RPC_NODE: string;
   NODE_ENV: 'development' | 'production' | 'test';
-  RPC_MAINNET: string;
-  RPC_ARBITRUM: string;
-  RPC_ARBITRUM_TESTNET: string;
   REDIS_URL: string;
   DEFENDER_API_KEY_TESTNET: string;
   DEFENDER_API_SECRET_TESTNET: string;
@@ -27,15 +24,13 @@ type SystemConfig = {
   TENDERLY_RPC_KEY: string;
   USE_MOCK_WALLET: string;
   SUBGRAPH_API_KEY: string;
+  PROXY_ORIGIN: string;
 };
 
 export const config: SystemConfig = {
   USE_CACHE: process.env.USE_CACHE || '',
   TRACING_RPC_NODE: process.env.TRACING_RPC_NODE || '',
   NODE_ENV: process.env.NODE_ENV || 'development',
-  RPC_MAINNET: process.env.NEXT_PUBLIC_RPC_MAINNET || '',
-  RPC_ARBITRUM: process.env.NEXT_PUBLIC_RPC_ARBITRUM || '',
-  RPC_ARBITRUM_TESTNET: process.env.NEXT_PUBLIC_RPC_ARBITRUM_TESTNET || '',
 
   REDIS_URL: process.env.REDIS_URL || '',
   DEFENDER_API_KEY_TESTNET: process.env.DEFENDER_API_KEY_TESTNET || '',
@@ -50,5 +45,6 @@ export const config: SystemConfig = {
   GASLESS_DISABLED: process.env.GASLESS_DISABLED || '',
   TENDERLY_RPC_KEY: process.env.NEXT_PUBLIC_TENDERLY_RPC_KEY || '',
   USE_MOCK_WALLET: process.env.NEXT_PUBLIC_USE_MOCK_WALLET || '',
-  SUBGRAPH_API_KEY: process.env.NEXT_PUBLIC_SUBGRAPH_API_KEY || ''
+  SUBGRAPH_API_KEY: process.env.NEXT_PUBLIC_SUBGRAPH_API_KEY || '',
+  PROXY_ORIGIN: process.env.NEXT_PUBLIC_PROXY_ORIGIN || ''
 };

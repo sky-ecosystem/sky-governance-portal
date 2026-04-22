@@ -11,11 +11,12 @@ import withApiHandler from 'modules/app/api/withApiHandler';
 import { getTypedBallotData } from 'modules/web3/helpers/signTypedBallotData';
 import { ApiError } from 'modules/app/api/ApiError';
 import { isSupportedNetwork } from 'modules/web3/helpers/networks';
-import { createWalletClient, fallback, http } from 'viem';
+import { createWalletClient, http } from 'viem';
 import { ONE_HOUR_IN_MS } from 'modules/app/constants/time';
 import { privateKeyToAccount } from 'viem/accounts';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { tenderly } from 'modules/wagmi/config/config.default';
+import { createProxyTransport } from 'modules/wagmi/config/proxyTransport';
 import { mainnet } from 'viem/chains';
 
 const genRanHex = (size: number) =>
@@ -38,7 +39,7 @@ export default withApiHandler(async (req: NextApiRequest, res: NextApiResponse) 
     chain,
     transport: isTestnet
       ? http(`https://virtual.mainnet.rpc.tenderly.co/${process.env.NEXT_PUBLIC_TENDERLY_RPC_KEY}`)
-      : fallback([http(process.env.NEXT_PUBLIC_RPC_MAINNET || '')])
+      : createProxyTransport(mainnet.id)
   });
 
   const voter = account.address;
