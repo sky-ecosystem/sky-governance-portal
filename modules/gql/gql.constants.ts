@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 /* Envio HyperIndex URLs (proxied via proxy.sky.money) */
 
-const PROXY_ORIGIN = process.env.NEXT_PUBLIC_PROXY_ORIGIN || '';
+const PROXY_ORIGIN = process.env.NEXT_PUBLIC_PROXY_ORIGIN || 'https://staging-proxy.sky.money';
 const ENVIO_INDEXER_URL = `${PROXY_ORIGIN}/indexer`;
 
 export const STAGING_SUBGRAPH_URL = ENVIO_INDEXER_URL;

@@ -1,6 +1,6 @@
 import { fallback, http } from 'viem';
 
-const PROXY_ORIGIN = process.env.NEXT_PUBLIC_PROXY_ORIGIN || '';
+const PROXY_ORIGIN = process.env.NEXT_PUBLIC_PROXY_ORIGIN || 'https://staging-proxy.sky.money';
 
 export const createProxyTransport = (chainId: number) =>
   fallback([
