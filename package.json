@@ -114,8 +114,9 @@
   },
   "pnpm": {
     "overrides": {
-      "axios@1.14.1": "1.13.2",
-      "axios@0.30.4": "0.21.4"
+      "axios@^1": "1.15.0",
+      "protobufjs@^6": "7.5.5",
+      "protobufjs@^7": "7.5.5"
     }
   },
   "packageManager": "pnpm@10.17.0"
