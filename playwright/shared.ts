@@ -22,13 +22,23 @@ export const TEST_ACCOUNTS: TestAccounts = {
 };
 
 export async function connectWallet(page: Page) {
-  await page.getByRole('button', { name: 'Connect wallet' }).click();
+  const connectBtn = page.getByRole('button', { name: 'Connect wallet' });
+
+  // Idempotent: if the wallet is already connected (e.g. after an earlier
+  // connectWallet call on a different page), the "Connect wallet" button is
+  // gone and there is nothing to do.
+  if ((await connectBtn.count()) === 0) return;
+
+  await connectBtn.first().click();
   try {
     await page.waitForSelector('text="Connected with Mock"', { timeout: 2000 });
-    await closeModal(page);
   } catch (error) {
     await page.getByTestId('select-wallet-mock').click();
+    // Wait for the mock connector to finish connecting before returning,
+    // otherwise downstream `:enabled` locators race the wallet state.
+    await page.waitForSelector('text="Connected with Mock"', { timeout: 20000 });
   }
+  await closeModal(page);
 }
 
 export async function closeModal(page: Page) {
