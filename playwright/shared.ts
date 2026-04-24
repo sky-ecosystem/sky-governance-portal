@@ -30,15 +30,22 @@ export async function connectWallet(page: Page) {
   if ((await connectBtn.count()) === 0) return;
 
   await connectBtn.first().click();
+  const mockOption = page.getByTestId('select-wallet-mock');
   try {
+    // Short probe: only true if the wallet is already connected and the
+    // button opened the connection-info modal instead of the selector.
     await page.waitForSelector('text="Connected with Mock"', { timeout: 2000 });
-  } catch (error) {
-    await page.getByTestId('select-wallet-mock').click();
-    // Wait for the mock connector to finish connecting before returning,
-    // otherwise downstream `:enabled` locators race the wallet state.
-    await page.waitForSelector('text="Connected with Mock"', { timeout: 20000 });
+    await closeModal(page);
+    return;
+  } catch {
+    // Normal path: pick the mock connector and wait for the selector modal
+    // to close, which only happens once the connection completes. That
+    // gates downstream `:enabled` locators on the wallet actually being
+    // connected, without relying on the "Connected with Mock" string
+    // (only shown when re-opening the info modal, not on fresh connect).
+    await mockOption.click();
+    await mockOption.waitFor({ state: 'hidden', timeout: 20000 });
   }
-  await closeModal(page);
 }
 
 export async function closeModal(page: Page) {
