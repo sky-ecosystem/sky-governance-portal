@@ -1,4 +1,4 @@
-// example format of valid id is '8db50a7a-2b07-413d-bad3-cc72e815c8fc'
+// example format of valid id is '0x1234...' — a 0x-prefixed 32-byte EVM tx hash
 export const isValidRelayerTxIdParam = (txId: string): boolean => {
-  return !!txId && txId.length === 36 && txId.split('-').length === 5;
+  return !!txId && /^0x[0-9a-fA-F]{64}$/.test(txId);
 };

@@ -23,7 +23,11 @@ import { Mock, vi } from 'vitest';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 
 vi.mock('modules/web3/helpers/getPublicClient');
-vi.mock('modules/polling/api/getArbitrumPollingContractRelayProvider');
+// Factory-form mock: prevents @coinbase/cdp-sdk from being loaded during test
+// resolution (the SDK has an undeclared bs58 import that breaks Vitest ESM).
+vi.mock('modules/polling/api/getArbitrumPollingContractRelayProvider', () => ({
+  getArbitrumPollingContractRelayProvider: vi.fn()
+}));
 vi.mock('modules/sky/helpers/getSKYVotingWeight');
 vi.mock('modules/cache/cache');
 vi.mock('modules/polling/api/fetchPolls');
@@ -42,9 +46,15 @@ describe('/api/polling/vote API Endpoint', () => {
     (getGaslessPublicClient as Mock).mockReturnValue({
       readContract: publicClientMockResponses
     });
-    (getArbitrumPollingContractRelayProvider as Mock).mockReturnValue({
-      vote: () => Promise.resolve(null),
-      'vote(address,uint256,uint256,uint256[],uint256[],uint8,bytes32,bytes32)': () => Promise.resolve(null)
+    (getArbitrumPollingContractRelayProvider as Mock).mockResolvedValue({
+      cdp: {
+        evm: {
+          sendTransaction: vi.fn().mockResolvedValue({ transactionHash: '0x' + '00'.repeat(32) })
+        }
+      },
+      account: { address: '0x0000000000000000000000000000000000000001' },
+      cdpNetwork: 'arbitrum',
+      pollingAddress: '0x0000000000000000000000000000000000000002'
     });
     (cacheSet as Mock).mockImplementation(() => null);
     (cacheDel as Mock).mockImplementation(() => null);

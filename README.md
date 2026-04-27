@@ -86,8 +86,12 @@ The following configuration values can be added to the `.env` file:
 
 - Set `GASLESS_WEBHOOK_URL` for sending gasless vote requests to discord
 
-**Optional** Set `DEFENDER_API_KEY_MAINNET` and/or `DEFENDER_API_KEY_TESTNET` to a valid OpenZeppelin Defender Relay key (used for gasless poll voting)
-**Optional** Set `DEFENDER_API_SECRET_MAINNET` and/or`DEFENDER_API_SECRET_TESTNET` to a valid OpenZeppelin Defender Relay secret
+**Optional** Gasless poll voting uses a Coinbase Developer Platform (CDP) server wallet to relay signed ballots to the Arbitrum polling contract. To enable it:
+- Set `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to a CDP API key pair (https://portal.cdp.coinbase.com).
+- Set `CDP_WALLET_SECRET` to the wallet secret from the same CDP project.
+- Optionally override the per-network account names with `CDP_WALLET_NAME_MAINNET` (default `sky-governance-mainnet`) and `CDP_WALLET_NAME_TESTNET` (default `sky-governance-testnet`). The same name resolves to the same EVM account across restarts via `getOrCreateAccount`.
+- Fund those CDP accounts with ETH on Arbitrum One / Arbitrum Sepolia respectively to pay gas on behalf of voters.
+
 **Optional** Set `GASLESS_BACKDOOR_SECRET` to allow for bypassing the gasless voting eligibility checks by anyone with the password
 
 - Set `DASHBOARD_PASSWORD` for adding protection to the `/dashboard` route
