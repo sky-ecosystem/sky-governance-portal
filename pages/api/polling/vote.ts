@@ -229,6 +229,10 @@ export default withApiHandler(
         data,
         account: account.address
       });
+      // 50% headroom over viem's estimate. Underprices strand the tx in
+      // mempool, which blocks every subsequent gasless vote until the
+      // stuck nonce clears (CDP doesn't auto-bump). Cheap insurance on L2.
+      const gasWithBuffer = (estimatedGas * 3n) / 2n;
 
       const { transactionHash } = await cdp.evm.sendTransaction({
         address: account.address,
@@ -236,7 +240,7 @@ export default withApiHandler(
         transaction: {
           to: pollingAddress,
           data,
-          gas: estimatedGas
+          gas: gasWithBuffer
         }
       });
 
