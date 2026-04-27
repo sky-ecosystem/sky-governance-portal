@@ -137,8 +137,9 @@ export default withApiHandler(
       await throwError({ error: API_VOTE_ERRORS.WRONG_SECRET, body: req.body, skipDiscord });
     }
 
-    //get arbitrum polling contract with relayer's signer
-    const { relayer, pollingAddress } = await getArbitrumPollingContractRelayProvider(network);
+    //get arbitrum polling contract with CDP server-wallet signer
+    const { cdp, account, cdpNetwork, pollingAddress } =
+      await getArbitrumPollingContractRelayProvider(network);
     const publicClient = getGaslessPublicClient(networkNameToChainId(network));
 
     //verify valid nonce and expiry date
@@ -223,23 +224,34 @@ export default withApiHandler(
         args: [voter, nonce, BigInt(expiry), parsedPollIds, parsedOptionIds, +(v as bigint).toString(), r, s]
       });
 
-      const relayerInstance = await relayer.getRelayer();
-      const address = relayerInstance.address;
       const estimatedGas = await publicClient.estimateGas({
         to: pollingAddress,
         data,
-        account: address as `0x${string}`
+        account: account.address
       });
 
-      tx = await relayer.sendTransaction({
-        to: pollingAddress,
-        data,
-        speed: 'fastest', // 'safeLow' | 'average' | 'fast' | 'fastest',
-        gasLimit: estimatedGas.toString()
+      const { transactionHash } = await cdp.evm.sendTransaction({
+        address: account.address,
+        network: cdpNetwork,
+        transaction: {
+          to: pollingAddress,
+          data,
+          gas: estimatedGas
+        }
       });
+
+      // Shape mirrors the previous Defender Relay response so the frontend
+      // BallotContext (hash, transactionId, sentAt, status) keeps working.
+      tx = {
+        hash: transactionHash,
+        transactionId: transactionHash,
+        sentAt: new Date().toISOString(),
+        status: 'sent'
+      };
     } catch (err) {
       //don't rate limit if tx didn't succeed
       cacheDel(cacheKey, network);
+      logger.error('Poll Gasless Vote: CDP sendTransaction failed', err);
       await throwError({ error: API_VOTE_ERRORS.RELAYER_ERROR, body: req.body, skipDiscord });
     }
 

@@ -11,10 +11,11 @@ type SystemConfig = {
   TRACING_RPC_NODE: string;
   NODE_ENV: 'development' | 'production' | 'test';
   REDIS_URL: string;
-  DEFENDER_API_KEY_TESTNET: string;
-  DEFENDER_API_SECRET_TESTNET: string;
-  DEFENDER_API_KEY_MAINNET: string;
-  DEFENDER_API_SECRET_MAINNET: string;
+  CDP_API_KEY_ID: string;
+  CDP_API_KEY_SECRET: string;
+  CDP_WALLET_SECRET: string;
+  CDP_WALLET_NAME_MAINNET: string;
+  CDP_WALLET_NAME_TESTNET: string;
   WALLETCONNECT_PROJECT_ID: string;
   MIGRATION_WEBHOOK_URL: string;
   GASLESS_WEBHOOK_URL: string;
@@ -33,10 +34,11 @@ export const config: SystemConfig = {
   NODE_ENV: process.env.NODE_ENV || 'development',
 
   REDIS_URL: process.env.REDIS_URL || '',
-  DEFENDER_API_KEY_TESTNET: process.env.DEFENDER_API_KEY_TESTNET || '',
-  DEFENDER_API_SECRET_TESTNET: process.env.DEFENDER_API_SECRET_TESTNET || '',
-  DEFENDER_API_KEY_MAINNET: process.env.DEFENDER_API_KEY_MAINNET || '',
-  DEFENDER_API_SECRET_MAINNET: process.env.DEFENDER_API_SECRET_MAINNET || '',
+  CDP_API_KEY_ID: process.env.CDP_API_KEY_ID || '',
+  CDP_API_KEY_SECRET: process.env.CDP_API_KEY_SECRET || '',
+  CDP_WALLET_SECRET: process.env.CDP_WALLET_SECRET || '',
+  CDP_WALLET_NAME_MAINNET: process.env.CDP_WALLET_NAME_MAINNET || 'sky-governance-mainnet',
+  CDP_WALLET_NAME_TESTNET: process.env.CDP_WALLET_NAME_TESTNET || 'sky-governance-testnet',
   WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
   MIGRATION_WEBHOOK_URL: process.env.MIGRATION_WEBHOOK_URL || '',
   GASLESS_WEBHOOK_URL: process.env.GASLESS_WEBHOOK_URL || '',
