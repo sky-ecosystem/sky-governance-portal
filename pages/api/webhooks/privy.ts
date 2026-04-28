@@ -73,13 +73,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     })) as Record<string, unknown> & { type: string };
   } catch (err) {
-    // TEMP DIAGNOSTIC: emit a non-sensitive fingerprint of the configured secret so we can
-    // confirm whether Vercel's bytes match local. SHA-256 is irreversible.
-    // Remove after verification.
+    // TEMP DIAGNOSTIC: emit fingerprints to identify the bytes-mismatch source.
     const secret = appConfig.PRIVY_WEBHOOK_SIGNING_SECRET || '';
-    const fp = crypto.createHash('sha256').update(secret).digest('hex').slice(0, 16);
-    logger.warn(`Privy webhook: signature verification failed (secret_len=${secret.length} fp=${fp})`);
-    res.status(401).json({ secret_len: secret.length, fp });
+    const reStringified = JSON.stringify(parsedBody);
+    const fp = (s: string) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
+    const diag = {
+      secret_len: secret.length,
+      secret_fp: fp(secret),
+      raw_body_len: rawBody.length,
+      raw_body_fp: fp(rawBody),
+      restringified_len: reStringified.length,
+      restringified_fp: fp(reStringified),
+      restringified_equals_raw: reStringified === rawBody,
+      svix_id: svixId,
+      svix_timestamp: svixTimestamp
+    };
+    logger.warn(`Privy webhook: signature verification failed`, diag);
+    res.status(401).json(diag);
     return;
   }
 
