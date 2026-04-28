@@ -8,10 +8,48 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'node:crypto';
-import { getPrivyClient } from 'lib/getPrivyClient';
 import { config as appConfig } from 'lib/config';
 import { handleStillPending } from 'modules/polling/helpers/handleStillPending';
 import logger from 'lib/logger';
+
+// Standard Webhooks (Svix) signature verification — same algorithm Privy uses internally.
+// Hand-rolled here to avoid Privy's SDK wrapper, which loads @hpke/chacha20poly1305 →
+// @hpke/common, a package whose CJS build has broken module resolution on Vercel's
+// serverless runtime. Webhook verification has no need for HPKE.
+const TIMESTAMP_TOLERANCE_SEC = 5 * 60;
+
+function verifySvixSignature(
+  rawBody: string,
+  svixId: string,
+  svixTimestamp: string,
+  svixSignatureHeader: string,
+  secret: string
+): void {
+  const ts = parseInt(svixTimestamp, 10);
+  if (!Number.isFinite(ts)) throw new Error('Invalid timestamp');
+  const skew = Math.abs(Math.floor(Date.now() / 1000) - ts);
+  if (skew > TIMESTAMP_TOLERANCE_SEC) throw new Error('Timestamp outside tolerance');
+
+  const stripped = secret.startsWith('whsec_') ? secret.slice('whsec_'.length) : secret;
+  const keyBytes = Buffer.from(stripped, 'base64');
+  const expected = crypto
+    .createHmac('sha256', keyBytes)
+    .update(`${svixId}.${svixTimestamp}.${rawBody}`)
+    .digest('base64');
+
+  // The header is space-separated `v1,<sig>` entries; any matching entry is sufficient.
+  for (const entry of svixSignatureHeader.split(' ')) {
+    const [version, sig] = entry.split(',');
+    if (version !== 'v1' || !sig) continue;
+    if (
+      sig.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+    ) {
+      return;
+    }
+  }
+  throw new Error('No matching signature found');
+}
 
 // Privy webhook signature verification (Svix) requires the raw request body byte-for-byte.
 // Disable Next.js body parsing so we can read it ourselves.
@@ -48,58 +86,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // Privy's SDK does `JSON.stringify(payload)` internally and feeds that to Svix's verifier,
-  // so we must hand it the *parsed* object (not the raw body string) — otherwise the SDK
-  // double-encodes and verification fails. JSON.parse → JSON.stringify is byte-stable on V8
-  // for the wire format Privy emits, so the re-serialized string still matches the signature.
-  let parsedBody: Record<string, unknown>;
   try {
-    parsedBody = JSON.parse(rawBody);
-  } catch {
-    logger.warn('Privy webhook: body is not valid JSON');
-    res.status(400).end();
+    verifySvixSignature(
+      rawBody,
+      svixId,
+      svixTimestamp,
+      svixSignature,
+      appConfig.PRIVY_WEBHOOK_SIGNING_SECRET
+    );
+  } catch (err) {
+    logger.warn('Privy webhook: signature verification failed:', (err as Error).message);
+    res.status(401).end();
     return;
   }
 
   let payload: Record<string, unknown> & { type: string };
   try {
-    const privy = getPrivyClient();
-    payload = (await privy.webhooks().verify({
-      payload: parsedBody,
-      svix: {
-        id: svixId,
-        timestamp: svixTimestamp,
-        signature: svixSignature
-      }
-    })) as Record<string, unknown> & { type: string };
-  } catch (err) {
-    // TEMP DIAGNOSTIC.
-    const secret = appConfig.PRIVY_WEBHOOK_SIGNING_SECRET || '';
-    const reStringified = JSON.stringify(parsedBody);
-    const fp = (s: string) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
-    // Compute the signature the server expects for the re-stringified body
-    // (matching what Privy's wrapper feeds to Svix.verify).
-    const stripped = secret.startsWith('whsec_') ? secret.slice('whsec_'.length) : secret;
-    const keyBytes = Buffer.from(stripped, 'base64');
-    const signedPayload = `${svixId}.${svixTimestamp}.${reStringified}`;
-    const expectedSig = crypto.createHmac('sha256', keyBytes).update(signedPayload).digest('base64');
-    const diag = {
-      secret_len: secret.length,
-      secret_fp: fp(secret),
-      key_byte_len: keyBytes.length,
-      raw_body_len: rawBody.length,
-      raw_body_fp: fp(rawBody),
-      restringified_len: reStringified.length,
-      restringified_fp: fp(reStringified),
-      restringified_equals_raw: reStringified === rawBody,
-      svix_id: svixId,
-      svix_timestamp: svixTimestamp,
-      received_signature: svixSignature,
-      expected_signature: `v1,${expectedSig}`,
-      verify_error: err instanceof Error ? err.message : String(err)
-    };
-    logger.warn('Privy webhook: signature verification failed', diag);
-    res.status(401).json(diag);
+    payload = JSON.parse(rawBody) as Record<string, unknown> & { type: string };
+  } catch {
+    logger.warn('Privy webhook: body is not valid JSON');
+    res.status(400).end();
     return;
   }
 
