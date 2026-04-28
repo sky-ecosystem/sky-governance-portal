@@ -72,7 +72,9 @@ export type PrivyClientLike = {
   };
   webhooks: () => {
     verify: (args: {
-      payload: string;
+      // Privy's SDK accepts a parsed object and JSON.stringifies it internally before
+      // calling Svix's verifier — passing a string here would get double-encoded.
+      payload: Record<string, unknown> | object;
       svix: { id: string; timestamp: string; signature: string };
     }) => Promise<PrivyVerifiedWebhook>;
   };

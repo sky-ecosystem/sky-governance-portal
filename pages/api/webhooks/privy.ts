@@ -47,11 +47,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
+  // Privy's SDK does `JSON.stringify(payload)` internally and feeds that to Svix's verifier,
+  // so we must hand it the *parsed* object (not the raw body string) — otherwise the SDK
+  // double-encodes and verification fails. JSON.parse → JSON.stringify is byte-stable on V8
+  // for the wire format Privy emits, so the re-serialized string still matches the signature.
+  let parsedBody: Record<string, unknown>;
+  try {
+    parsedBody = JSON.parse(rawBody);
+  } catch {
+    logger.warn('Privy webhook: body is not valid JSON');
+    res.status(400).end();
+    return;
+  }
+
   let payload: Record<string, unknown> & { type: string };
   try {
     const privy = getPrivyClient();
     payload = (await privy.webhooks().verify({
-      payload: rawBody,
+      payload: parsedBody,
       svix: {
         id: svixId,
         timestamp: svixTimestamp,
