@@ -28,18 +28,19 @@ const BUMP_ATTEMPT_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 type StillPendingPayload = {
   type?: string;
   transaction_id: string;
-  transaction_hash?: string;
+  transaction_hash?: `0x${string}`;
   wallet_id: string;
   caip2: string;
+  // Privy sends Quantity fields as 0x-prefixed hex strings on the wire.
   transaction_request: {
     chain_id?: number;
     to: string;
-    data?: string;
-    value?: string;
+    data?: `0x${string}`;
+    value?: `0x${string}`;
     nonce: number;
-    gas_limit?: string;
-    max_fee_per_gas?: string;
-    max_priority_fee_per_gas?: string;
+    gas_limit?: `0x${string}`;
+    max_fee_per_gas?: `0x${string}`;
+    max_priority_fee_per_gas?: `0x${string}`;
     type?: number | string;
   };
 };
