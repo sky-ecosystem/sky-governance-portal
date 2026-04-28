@@ -7,6 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 import { NextApiRequest, NextApiResponse } from 'next';
+import crypto from 'node:crypto';
 import { getPrivyClient } from 'lib/getPrivyClient';
 import { config as appConfig } from 'lib/config';
 import { handleStillPending } from 'modules/polling/helpers/handleStillPending';
@@ -72,8 +73,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     })) as Record<string, unknown> & { type: string };
   } catch (err) {
-    logger.warn('Privy webhook: signature verification failed');
-    res.status(401).end();
+    // TEMP DIAGNOSTIC: emit a non-sensitive fingerprint of the configured secret so we can
+    // confirm whether Vercel's bytes match local. SHA-256 is irreversible.
+    // Remove after verification.
+    const secret = appConfig.PRIVY_WEBHOOK_SIGNING_SECRET || '';
+    const fp = crypto.createHash('sha256').update(secret).digest('hex').slice(0, 16);
+    logger.warn(`Privy webhook: signature verification failed (secret_len=${secret.length} fp=${fp})`);
+    res.status(401).json({ secret_len: secret.length, fp });
     return;
   }
 
