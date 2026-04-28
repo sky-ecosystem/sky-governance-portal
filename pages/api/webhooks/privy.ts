@@ -73,20 +73,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     })) as Record<string, unknown> & { type: string };
   } catch (err) {
-    // TEMP DIAGNOSTIC: emit fingerprints to identify the bytes-mismatch source.
+    // TEMP DIAGNOSTIC.
     const secret = appConfig.PRIVY_WEBHOOK_SIGNING_SECRET || '';
     const reStringified = JSON.stringify(parsedBody);
     const fp = (s: string) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
+    // Compute the signature the server expects for the re-stringified body
+    // (matching what Privy's wrapper feeds to Svix.verify).
+    const stripped = secret.startsWith('whsec_') ? secret.slice('whsec_'.length) : secret;
+    const keyBytes = Buffer.from(stripped, 'base64');
+    const signedPayload = `${svixId}.${svixTimestamp}.${reStringified}`;
+    const expectedSig = crypto.createHmac('sha256', keyBytes).update(signedPayload).digest('base64');
     const diag = {
       secret_len: secret.length,
       secret_fp: fp(secret),
+      key_byte_len: keyBytes.length,
       raw_body_len: rawBody.length,
       raw_body_fp: fp(rawBody),
       restringified_len: reStringified.length,
       restringified_fp: fp(reStringified),
       restringified_equals_raw: reStringified === rawBody,
       svix_id: svixId,
-      svix_timestamp: svixTimestamp
+      svix_timestamp: svixTimestamp,
+      received_signature: svixSignature,
+      expected_signature: `v1,${expectedSig}`,
+      verify_error: err instanceof Error ? err.message : String(err)
     };
     logger.warn('Privy webhook: signature verification failed', diag);
     res.status(401).json(diag);
