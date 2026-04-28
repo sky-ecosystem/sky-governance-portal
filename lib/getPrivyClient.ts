@@ -11,15 +11,19 @@ import { config } from './config';
 // Minimal surface area we use, kept here so consumers don't depend on @privy-io/node types directly.
 // Lazy-required at runtime so vite/test transforms don't statically resolve the SDK.
 // Shape derived from Privy's Node SDK quickstart and the speeding-up-transactions recipe.
+// Privy "Quantity" fields accept a 0x-prefixed hex string or a non-negative integer.
+// In practice the API rejects decimal strings, so we always send 0x-hex via viem's numberToHex.
+type Quantity = `0x${string}` | number;
+
 export type PrivyTransactionRequest = {
   to: string;
-  value?: string;
-  data?: string;
-  nonce?: number;
-  chain_id?: number;
-  gas_limit?: string;
-  max_fee_per_gas?: string;
-  max_priority_fee_per_gas?: string;
+  value?: Quantity;
+  data?: `0x${string}`;
+  nonce?: Quantity;
+  chain_id?: Quantity;
+  gas_limit?: Quantity;
+  max_fee_per_gas?: Quantity;
+  max_priority_fee_per_gas?: Quantity;
 };
 
 export type PrivySendTransactionResult = {
