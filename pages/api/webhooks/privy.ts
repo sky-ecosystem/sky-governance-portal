@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       svix_id: svixId,
       svix_timestamp: svixTimestamp
     };
-    logger.warn(`Privy webhook: signature verification failed`, diag);
+    logger.warn('Privy webhook: signature verification failed', diag);
     res.status(401).json(diag);
     return;
   }
