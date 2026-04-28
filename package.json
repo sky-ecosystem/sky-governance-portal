@@ -41,6 +41,7 @@
     "date-fns": "^2.24.0",
     "date-fns-tz": "^1.1.6",
     "debug": "^4.4.0",
+    "@privy-io/node": "^0.15.0",
     "defender-relay-client": "^1.23.0",
     "eth-rpc-errors": "^4.0.3",
     "gray-matter": "^4.0.2",
