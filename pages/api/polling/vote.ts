@@ -12,9 +12,9 @@ import { getTypedBallotData } from 'modules/web3/helpers/signTypedBallotData';
 import { cacheSet, cacheDel } from 'modules/cache/cache';
 import { GASLESS_RATE_LIMIT_IN_MS } from 'modules/polling/polling.constants';
 import { getRecentlyUsedGaslessVotingKey } from 'modules/cache/constants/cache-keys';
-import { config, isPrivyRelayerEnabled } from 'lib/config';
+import { config, isPrivyRelayerEnabled, isPrivyDebugUnderpriceEnabled } from 'lib/config';
 import { getArbitrumPollingContractRelayProvider } from 'modules/polling/api/getArbitrumPollingContractRelayProvider';
-import { getPrivyClient } from 'lib/getPrivyClient';
+import { getPrivyClient, PrivyTransactionRequest } from 'lib/getPrivyClient';
 import { getPrivyWalletConfig } from 'modules/polling/helpers/relayerCredentials';
 import { pollingArbitrumAddress } from 'modules/contracts/generated';
 import logger from 'lib/logger';
@@ -240,20 +240,30 @@ export default withApiHandler(
         // 20% buffer to account for sub-block variability between estimate and broadcast.
         const gasWithBuffer = (estimatedGas * 120n) / 100n;
 
+        const transaction: PrivyTransactionRequest = {
+          to: pollingAddress,
+          data,
+          chain_id: numberToHex(gaslessChainId),
+          gas_limit: numberToHex(gasWithBuffer)
+        };
+
+        // DEBUG flag: force underpriced fees so the tx sits in mempool and Privy fires
+        // transaction.still_pending, exercising the bump handler end-to-end.
+        // ~0.0001 gwei is well below Arbitrum's base fee on either network. MUST be off in prod.
+        if (isPrivyDebugUnderpriceEnabled()) {
+          const underpriced = numberToHex(100000n);
+          transaction.max_fee_per_gas = underpriced;
+          transaction.max_priority_fee_per_gas = underpriced;
+          logger.warn('API Vote: PRIVY_DEBUG_UNDERPRICE active — sending intentionally underpriced tx');
+        }
+
         const privy = getPrivyClient();
         const result = await privy
           .wallets()
           .ethereum()
           .sendTransaction(walletId, {
             caip2,
-            params: {
-              transaction: {
-                to: pollingAddress,
-                data,
-                chain_id: numberToHex(gaslessChainId),
-                gas_limit: numberToHex(gasWithBuffer)
-              }
-            }
+            params: { transaction }
           });
 
         if (!result.transaction_id) {
