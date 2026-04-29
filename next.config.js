@@ -51,12 +51,6 @@ const moduleExports = {
   // Opt-in SWC minification (next 12.0.2)
   // swcMinify: true, // fatal runtime error: failed to initiate panic, error 5
 
-  // Force the Privy SDK and its HPKE deps to be loaded at runtime instead of bundled.
-  // The @hpke/common CJS build has a broken require('./src/errors.js') that pnpm symlinks
-  // resolve locally but Vercel's serverless bundler does not. Treating these as external
-  // packages preserves the symlink-based resolution on the serverless runtime.
-  serverExternalPackages: ['@privy-io/node', '@hpke/common', '@hpke/core', '@hpke/chacha20poly1305'],
-
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Fixes npm packages that depend on `fs` module

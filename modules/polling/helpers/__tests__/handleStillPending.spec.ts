@@ -10,13 +10,13 @@ import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { parseGwei } from 'viem';
 import { handleStillPending, __testables } from '../handleStillPending';
 import { cacheSetNX } from 'modules/cache/cache';
-import { getPrivyClient } from 'lib/getPrivyClient';
+import { privySendTransaction } from 'lib/privyRest';
 import { postRequestToDiscord } from 'modules/app/api/postRequestToDiscord';
 import { config } from 'lib/config';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 
 vi.mock('modules/cache/cache');
-vi.mock('lib/getPrivyClient');
+vi.mock('lib/privyRest');
 vi.mock('modules/app/api/postRequestToDiscord');
 vi.mock('modules/web3/helpers/getPublicClient');
 vi.mock('modules/web3/helpers/chain', () => ({ networkNameToChainId: () => 42161 }));
@@ -29,15 +29,14 @@ vi.mock('lib/config', () => ({
   isPrivyRelayerEnabled: () => true
 }));
 
-const sendTransaction = vi.fn();
 const getTransactionReceipt = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
-  (getPrivyClient as Mock).mockReturnValue({
-    wallets: () => ({
-      ethereum: () => ({ sendTransaction })
-    })
+  (privySendTransaction as Mock).mockResolvedValue({
+    hash: '0xnew',
+    transaction_id: 'tx-bumped',
+    caip2: 'eip155:42161'
   });
   (getGaslessPublicClient as Mock).mockReturnValue({ getTransactionReceipt });
   // Default: not yet mined
@@ -64,22 +63,21 @@ const validPayload = {
 describe('handleStillPending', () => {
   it('claims slot 1 on first attempt and bumps fees by 1.4x', async () => {
     (cacheSetNX as Mock).mockResolvedValueOnce(true);
-    sendTransaction.mockResolvedValue({ hash: '0xnew', transactionId: 'tx-bumped', caip2: 'eip155:42161' });
 
     await handleStillPending(validPayload);
 
     expect(cacheSetNX).toHaveBeenCalledTimes(1);
-    expect(sendTransaction).toHaveBeenCalledTimes(1);
-    const [walletId, opts] = sendTransaction.mock.calls[0];
+    expect(privySendTransaction).toHaveBeenCalledTimes(1);
+    const [walletId, opts] = (privySendTransaction as Mock).mock.calls[0];
     expect(walletId).toBe('wallet-mainnet');
     expect(opts.caip2).toBe('eip155:42161');
-    expect(opts.params.transaction.nonce).toBe(7);
-    expect(opts.params.transaction.to).toBe('0xPolling');
+    expect(opts.transaction.nonce).toBe(7);
+    expect(opts.transaction.to).toBe('0xPolling');
     // 0.1 gwei * 1.4 = 0.14 gwei
-    expect(BigInt(opts.params.transaction.max_priority_fee_per_gas)).toBe(
+    expect(BigInt(opts.transaction.max_priority_fee_per_gas)).toBe(
       (BigInt(validPayload.transaction_request.max_priority_fee_per_gas) * 14n) / 10n
     );
-    expect(opts.idempotency_key).toBe('bump-tx-123-1');
+    expect(opts.idempotencyKey).toBe('bump-tx-123-1');
   });
 
   it('alerts and bails when both attempt slots are taken (cap reached)', async () => {
@@ -87,7 +85,7 @@ describe('handleStillPending', () => {
 
     await handleStillPending(validPayload);
 
-    expect(sendTransaction).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
     expect(postRequestToDiscord).toHaveBeenCalledWith(
       expect.objectContaining({
         url: config.GASLESS_WEBHOOK_URL,
@@ -104,7 +102,7 @@ describe('handleStillPending', () => {
 
     await handleStillPending(validPayload);
 
-    expect(sendTransaction).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
   });
 
   it('aborts when bumped priority fee would exceed the absolute ceiling', async () => {
@@ -120,7 +118,7 @@ describe('handleStillPending', () => {
       }
     });
 
-    expect(sendTransaction).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
     expect(postRequestToDiscord).toHaveBeenCalledTimes(1);
     const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
     expect(content).toMatch(/exceed ceiling/i);
@@ -131,7 +129,7 @@ describe('handleStillPending', () => {
       handleStillPending({ ...validPayload, wallet_id: 'wallet-unknown' })
     ).rejects.toThrow(/Unknown Privy wallet id/);
     expect(cacheSetNX).not.toHaveBeenCalled();
-    expect(sendTransaction).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
   });
 
   it('aborts when payload caip2 does not match wallet network', async () => {
@@ -141,7 +139,7 @@ describe('handleStillPending', () => {
       caip2: 'eip155:421614'
     });
 
-    expect(sendTransaction).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
     expect(postRequestToDiscord).toHaveBeenCalledTimes(1);
     const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
     expect(content).toMatch(/does not match/i);
@@ -149,7 +147,6 @@ describe('handleStillPending', () => {
 
   it('routes testnet wallet using the testnet CAIP-2', async () => {
     (cacheSetNX as Mock).mockResolvedValueOnce(true);
-    sendTransaction.mockResolvedValue({});
 
     await handleStillPending({
       ...validPayload,
@@ -158,7 +155,7 @@ describe('handleStillPending', () => {
       transaction_request: { ...validPayload.transaction_request, chain_id: 421614 }
     });
 
-    expect(sendTransaction.mock.calls[0][1].caip2).toBe('eip155:421614');
+    expect((privySendTransaction as Mock).mock.calls[0][1].caip2).toBe('eip155:421614');
   });
 });
 

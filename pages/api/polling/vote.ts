@@ -14,7 +14,7 @@ import { GASLESS_RATE_LIMIT_IN_MS } from 'modules/polling/polling.constants';
 import { getRecentlyUsedGaslessVotingKey } from 'modules/cache/constants/cache-keys';
 import { config, isPrivyRelayerEnabled } from 'lib/config';
 import { getArbitrumPollingContractRelayProvider } from 'modules/polling/api/getArbitrumPollingContractRelayProvider';
-import { getPrivyClient, PrivyTransactionRequest } from 'lib/getPrivyClient';
+import { privySendTransaction } from 'lib/privyRest';
 import { getPrivyWalletConfig } from 'modules/polling/helpers/relayerCredentials';
 import { pollingArbitrumAddress } from 'modules/contracts/generated';
 import logger from 'lib/logger';
@@ -240,21 +240,15 @@ export default withApiHandler(
         // 20% buffer to account for sub-block variability between estimate and broadcast.
         const gasWithBuffer = (estimatedGas * 120n) / 100n;
 
-        const privy = getPrivyClient();
-        const result = await privy
-          .wallets()
-          .ethereum()
-          .sendTransaction(walletId, {
-            caip2,
-            params: {
-              transaction: {
-                to: pollingAddress,
-                data,
-                chain_id: numberToHex(gaslessChainId),
-                gas_limit: numberToHex(gasWithBuffer)
-              }
-            }
-          });
+        const result = await privySendTransaction(walletId, {
+          caip2,
+          transaction: {
+            to: pollingAddress,
+            data,
+            chain_id: numberToHex(gaslessChainId),
+            gas_limit: numberToHex(gasWithBuffer)
+          }
+        });
 
         if (!result.transaction_id) {
           // BallotContext polls /api/polling/relayer-tx?txId={transactionId}; without an id we can't track.

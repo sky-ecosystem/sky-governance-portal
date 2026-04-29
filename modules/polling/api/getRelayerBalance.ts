@@ -13,7 +13,7 @@ import logger from 'lib/logger';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
 import { isPrivyRelayerEnabled } from 'lib/config';
-import { getPrivyClient } from 'lib/getPrivyClient';
+import { privyGetWallet } from 'lib/privyRest';
 import { getPrivyWalletConfig } from '../helpers/relayerCredentials';
 
 // Memoize wallet-id → address. Privy server-wallet addresses never change for a wallet id,
@@ -22,7 +22,7 @@ const privyAddressCache: Record<string, string> = {};
 
 async function resolvePrivyAddress(walletId: string): Promise<string> {
   if (privyAddressCache[walletId]) return privyAddressCache[walletId];
-  const wallet = await getPrivyClient().wallets().get(walletId);
+  const wallet = await privyGetWallet(walletId);
   privyAddressCache[walletId] = wallet.address;
   return wallet.address;
 }

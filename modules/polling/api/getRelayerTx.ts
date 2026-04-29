@@ -10,7 +10,7 @@ import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { Relayer } from 'defender-relay-client';
 import { relayerCredentials } from '../helpers/relayerCredentials';
 import { isPrivyRelayerEnabled } from 'lib/config';
-import { getPrivyClient } from 'lib/getPrivyClient';
+import { privyGetTransaction } from 'lib/privyRest';
 import { mapPrivyStatus, LegacyRelayerTxStatus, PrivyTransactionState } from './mapPrivyStatus';
 
 export type { LegacyRelayerTxStatus, PrivyTransactionState };
@@ -25,8 +25,7 @@ export const getRelayerTx = async (
   }
 
   if (isPrivyRelayerEnabled()) {
-    const privy = getPrivyClient();
-    const tx = await privy.transactions().get(txId);
+    const tx = await privyGetTransaction(txId);
     return {
       hash: tx.transaction_hash ?? undefined,
       transactionId: tx.id,

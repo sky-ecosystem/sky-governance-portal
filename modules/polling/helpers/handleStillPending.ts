@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { parseGwei, numberToHex } from 'viem';
 import { config } from 'lib/config';
-import { getPrivyClient } from 'lib/getPrivyClient';
+import { privySendTransaction } from 'lib/privyRest';
 import { cacheSetNX } from 'modules/cache/cache';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { postRequestToDiscord } from 'modules/app/api/postRequestToDiscord';
@@ -158,28 +158,22 @@ export async function handleStillPending(rawPayload: Record<string, unknown>): P
   const bumpedMaxFee = bump(currentMaxFee);
 
   try {
-    const privy = getPrivyClient();
-    await privy
-      .wallets()
-      .ethereum()
-      .sendTransaction(wallet_id, {
-        caip2,
-        params: {
-          transaction: {
-            to: transaction_request.to,
-            data: transaction_request.data,
-            value: transaction_request.value,
-            nonce: transaction_request.nonce,
-            chain_id:
-              transaction_request.chain_id !== undefined
-                ? numberToHex(transaction_request.chain_id)
-                : undefined,
-            max_priority_fee_per_gas: numberToHex(bumpedPriorityFee),
-            max_fee_per_gas: numberToHex(bumpedMaxFee)
-          }
-        },
-        idempotency_key: `bump-${transaction_id}-${attempt}`
-      });
+    await privySendTransaction(wallet_id, {
+      caip2,
+      transaction: {
+        to: transaction_request.to,
+        data: transaction_request.data,
+        value: transaction_request.value,
+        nonce: transaction_request.nonce,
+        chain_id:
+          transaction_request.chain_id !== undefined
+            ? numberToHex(transaction_request.chain_id)
+            : undefined,
+        max_priority_fee_per_gas: numberToHex(bumpedPriorityFee),
+        max_fee_per_gas: numberToHex(bumpedMaxFee)
+      },
+      idempotencyKey: `bump-${transaction_id}-${attempt}`
+    });
     logger.debug(`[gasless] bumped tx ${transaction_id} (attempt ${attempt}/${MAX_BUMP_ATTEMPTS})`);
   } catch (err) {
     await alert(
