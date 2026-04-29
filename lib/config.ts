@@ -21,7 +21,6 @@ type SystemConfig = {
   PRIVY_WALLET_ID_MAINNET: string;
   PRIVY_WALLET_ID_TESTNET: string;
   USE_PRIVY_RELAYER: string;
-  PRIVY_DEBUG_UNDERPRICE: string;
   WALLETCONNECT_PROJECT_ID: string;
   MIGRATION_WEBHOOK_URL: string;
   GASLESS_WEBHOOK_URL: string;
@@ -50,7 +49,6 @@ export const config: SystemConfig = {
   PRIVY_WALLET_ID_MAINNET: process.env.PRIVY_WALLET_ID_MAINNET || '',
   PRIVY_WALLET_ID_TESTNET: process.env.PRIVY_WALLET_ID_TESTNET || '',
   USE_PRIVY_RELAYER: process.env.USE_PRIVY_RELAYER || '',
-  PRIVY_DEBUG_UNDERPRICE: process.env.PRIVY_DEBUG_UNDERPRICE || '',
   WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
   MIGRATION_WEBHOOK_URL: process.env.MIGRATION_WEBHOOK_URL || '',
   GASLESS_WEBHOOK_URL: process.env.GASLESS_WEBHOOK_URL || '',
@@ -65,10 +63,3 @@ export const config: SystemConfig = {
 
 export const isPrivyRelayerEnabled = (): boolean =>
   config.USE_PRIVY_RELAYER === 'true' || config.USE_PRIVY_RELAYER === '1';
-
-// Debug override: when true, the Privy vote path sends transactions with fees
-// far below the network base fee so they sit in the mempool until Privy fires
-// transaction.still_pending. Used to exercise the bump handler end-to-end.
-// MUST be off in production.
-export const isPrivyDebugUnderpriceEnabled = (): boolean =>
-  config.PRIVY_DEBUG_UNDERPRICE === 'true' || config.PRIVY_DEBUG_UNDERPRICE === '1';
