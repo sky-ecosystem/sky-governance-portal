@@ -121,15 +121,6 @@ export async function refetchPolls(network: SupportedNetworks): Promise<{
     })
     .filter(poll => !!poll);
 
-  // Local-testing override: extends every poll's endDate so finished polls
-  // become active again. Set MOCK_ACTIVE_POLLS=true in .env. Do not ship.
-  if (process.env.MOCK_ACTIVE_POLLS === 'true') {
-    const futureEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    pollList.forEach(p => {
-      p.endDate = futureEnd;
-    });
-  }
-
   const partialActivePolls = pollList
     .filter(poll => new Date(poll.endDate) > new Date())
     .map(({ pollId, startDate, endDate }) => ({
