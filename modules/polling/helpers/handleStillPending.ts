@@ -20,6 +20,11 @@ import logger from 'lib/logger';
 const BUMP_MULTIPLIER_NUM = 14n; // 1.4x as 14/10 to keep arithmetic in BigInt
 const BUMP_MULTIPLIER_DEN = 10n;
 const MAX_BUMP_ATTEMPTS = 2;
+// Arbitrum's sequencer is FIFO and doesn't auction on priority fee, so legitimate priority
+// fees are typically <0.01 gwei. 1 gwei is ~100× normal — a guardrail against malformed
+// webhook payloads, not a target. Effective tip per gas = min(max_priority_fee, max_fee -
+// base_fee), so capping priority alone bounds our overpayment; max_fee stays uncapped to
+// stretch over any base-fee spike.
 const ABSOLUTE_PRIORITY_FEE_CEILING = parseGwei('1');
 const BUMP_ATTEMPT_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
