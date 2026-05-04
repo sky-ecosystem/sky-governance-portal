@@ -8,11 +8,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { formatEther } from 'viem';
-import { getArbitrumRelaySigner } from './getArbitrumRelaySigner';
 import logger from 'lib/logger';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
-import { isPrivyRelayerEnabled } from 'lib/config';
 import { privyGetWallet } from 'lib/privyRest';
 import { getPrivyWalletConfig } from '../helpers/relayerCredentials';
 
@@ -34,16 +32,8 @@ export const getRelayerBalance = async (network: SupportedNetworks): Promise<str
     }
 
     const gaslessPublicClient = getGaslessPublicClient(networkNameToChainId(network));
-
-    let address: string;
-    if (isPrivyRelayerEnabled()) {
-      const { walletId } = getPrivyWalletConfig(network);
-      address = await resolvePrivyAddress(walletId);
-    } else {
-      const relayer = getArbitrumRelaySigner(network);
-      const relayerInstance = await relayer.getRelayer();
-      address = relayerInstance.address;
-    }
+    const { walletId } = getPrivyWalletConfig(network);
+    const address = await resolvePrivyAddress(walletId);
 
     const balance = await gaslessPublicClient.getBalance({ address: address as `0x${string}` });
     return formatEther(balance);

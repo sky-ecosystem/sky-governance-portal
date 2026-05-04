@@ -9,11 +9,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { config } from 'lib/config';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 
-export const relayerCredentials = {
-  mainnet: { apiKey: config.DEFENDER_API_KEY_MAINNET, apiSecret: config.DEFENDER_API_SECRET_MAINNET },
-  tenderly: { apiKey: config.DEFENDER_API_KEY_TESTNET, apiSecret: config.DEFENDER_API_SECRET_TESTNET }
-};
-
 // Privy uses CAIP-2 chain identifiers in the SDK and webhook payloads.
 // Arbitrum One = eip155:42161, Arbitrum Sepolia = eip155:421614.
 export const ARBITRUM_ONE_CAIP2 = 'eip155:42161';

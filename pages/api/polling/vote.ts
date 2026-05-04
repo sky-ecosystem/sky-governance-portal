@@ -12,8 +12,7 @@ import { getTypedBallotData } from 'modules/web3/helpers/signTypedBallotData';
 import { cacheSet, cacheDel } from 'modules/cache/cache';
 import { GASLESS_RATE_LIMIT_IN_MS } from 'modules/polling/polling.constants';
 import { getRecentlyUsedGaslessVotingKey } from 'modules/cache/constants/cache-keys';
-import { config, isPrivyRelayerEnabled } from 'lib/config';
-import { getArbitrumPollingContractRelayProvider } from 'modules/polling/api/getArbitrumPollingContractRelayProvider';
+import { config } from 'lib/config';
 import { privySendTransaction } from 'lib/privyRest';
 import { getPrivyWalletConfig } from 'modules/polling/helpers/relayerCredentials';
 import { pollingArbitrumAddress } from 'modules/contracts/generated';
@@ -140,17 +139,11 @@ export default withApiHandler(
       await throwError({ error: API_VOTE_ERRORS.WRONG_SECRET, body: req.body, skipDiscord });
     }
 
-    const usePrivy = isPrivyRelayerEnabled();
     const publicClient = getGaslessPublicClient(networkNameToChainId(network));
     // pollingArbitrumAddress is keyed on the Arbitrum chain ids, so map the L1/Tenderly
     // network to its corresponding Arbitrum chain (One for mainnet, Sepolia for testnet/tenderly).
     const gaslessChainId = networkNameToChainId(getGaslessNetwork(network));
-
-    //get arbitrum polling contract with relayer's signer (Defender path only)
-    const defenderCtx = !usePrivy ? await getArbitrumPollingContractRelayProvider(network) : null;
-    const pollingAddress = usePrivy
-      ? (pollingArbitrumAddress[gaslessChainId] as `0x${string}`)
-      : (defenderCtx as NonNullable<typeof defenderCtx>).pollingAddress;
+    const pollingAddress = pollingArbitrumAddress[gaslessChainId] as `0x${string}`;
 
     //verify valid nonce and expiry date
     const nonceFromContract = await publicClient.readContract({
@@ -234,50 +227,31 @@ export default withApiHandler(
         args: [voter, nonce, BigInt(expiry), parsedPollIds, parsedOptionIds, +(v as bigint).toString(), r, s]
       });
 
-      if (usePrivy) {
-        const { walletId, caip2 } = getPrivyWalletConfig(network);
-        const estimatedGas = await publicClient.estimateGas({ to: pollingAddress, data });
-        // 20% buffer to account for sub-block variability between estimate and broadcast.
-        const gasWithBuffer = (estimatedGas * 120n) / 100n;
+      const { walletId, caip2 } = getPrivyWalletConfig(network);
+      const estimatedGas = await publicClient.estimateGas({ to: pollingAddress, data });
+      // 20% buffer to account for sub-block variability between estimate and broadcast.
+      const gasWithBuffer = (estimatedGas * 120n) / 100n;
 
-        const result = await privySendTransaction(walletId, {
-          caip2,
-          transaction: {
-            to: pollingAddress,
-            data,
-            chain_id: numberToHex(gaslessChainId),
-            gas_limit: numberToHex(gasWithBuffer)
-          }
-        });
-
-        if (!result.transaction_id) {
-          // BallotContext polls /api/polling/relayer-tx?txId={transactionId}; without an id we can't track.
-          throw new Error('Privy sendTransaction did not return a transaction_id');
+      const result = await privySendTransaction(walletId, {
+        caip2,
+        transaction: {
+          to: pollingAddress,
+          data,
+          chain_id: numberToHex(gaslessChainId),
+          gas_limit: numberToHex(gasWithBuffer)
         }
-        tx = {
-          hash: result.hash,
-          transactionId: result.transaction_id,
-          sentAt: new Date().toISOString(),
-          // Privy returns 'broadcasted' immediately; map to legacy 'sent' so BallotContext is unchanged.
-          status: 'sent'
-        };
-      } else {
-        const relayer = (defenderCtx as NonNullable<typeof defenderCtx>).relayer;
-        const relayerInstance = await relayer.getRelayer();
-        const address = relayerInstance.address;
-        const estimatedGas = await publicClient.estimateGas({
-          to: pollingAddress,
-          data,
-          account: address as `0x${string}`
-        });
+      });
 
-        tx = await relayer.sendTransaction({
-          to: pollingAddress,
-          data,
-          speed: 'fastest', // 'safeLow' | 'average' | 'fast' | 'fastest',
-          gasLimit: estimatedGas.toString()
-        });
+      if (!result.transaction_id) {
+        // BallotContext polls /api/polling/relayer-tx?txId={transactionId}; without an id we can't track.
+        throw new Error('Privy sendTransaction did not return a transaction_id');
       }
+      tx = {
+        hash: result.hash,
+        transactionId: result.transaction_id,
+        sentAt: new Date().toISOString(),
+        status: 'broadcasted'
+      };
     } catch (err) {
       //don't rate limit if tx didn't succeed
       cacheDel(cacheKey, network);

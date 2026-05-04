@@ -7,11 +7,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 import { config } from './config';
-import type {
-  PrivyTransactionRequest,
-  PrivySendTransactionResult,
-  PrivyTransactionRecord
-} from './getPrivyClient';
 
 // Direct REST client for Privy's API. Used in production code paths to bypass
 // @privy-io/node's SDK, which transitively loads @hpke/* and fails on Vercel's
@@ -20,6 +15,45 @@ import type {
 // Authentication: HTTP Basic with appId:appSecret + the privy-app-id header.
 
 const PRIVY_API_BASE = 'https://api.privy.io';
+
+// Privy "Quantity" fields accept a 0x-prefixed hex string or a non-negative integer.
+// In practice the API rejects decimal strings, so we always send 0x-hex via viem's numberToHex.
+type Quantity = `0x${string}` | number;
+
+export type PrivyTransactionRequest = {
+  to: string;
+  value?: Quantity;
+  data?: `0x${string}`;
+  nonce?: Quantity;
+  chain_id?: Quantity;
+  gas_limit?: Quantity;
+  max_fee_per_gas?: Quantity;
+  max_priority_fee_per_gas?: Quantity;
+};
+
+export type PrivySendTransactionResult = {
+  hash: string;
+  transaction_id?: string;
+  caip2: string;
+};
+
+export type PrivyTransactionRecord = {
+  id: string;
+  caip2: string;
+  status:
+    | 'broadcasted'
+    | 'pending'
+    | 'confirmed'
+    | 'finalized'
+    | 'failed'
+    | 'execution_reverted'
+    | 'provider_error'
+    | 'replaced';
+  transaction_hash: string | null;
+  wallet_id: string;
+  created_at: number;
+  method?: string;
+};
 
 function authHeaders(): Record<string, string> {
   if (!config.PRIVY_APP_ID || !config.PRIVY_APP_SECRET) {

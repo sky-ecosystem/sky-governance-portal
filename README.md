@@ -86,8 +86,8 @@ The following configuration values can be added to the `.env` file:
 
 - Set `GASLESS_WEBHOOK_URL` for sending gasless vote requests to discord
 
-**Optional** Set `DEFENDER_API_KEY_MAINNET` and/or `DEFENDER_API_KEY_TESTNET` to a valid OpenZeppelin Defender Relay key (used for gasless poll voting)
-**Optional** Set `DEFENDER_API_SECRET_MAINNET` and/or`DEFENDER_API_SECRET_TESTNET` to a valid OpenZeppelin Defender Relay secret
+**Required for gasless voting** Set `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, and `PRIVY_WEBHOOK_SIGNING_SECRET` for the Privy server-wallet relayer
+**Required for gasless voting** Set `PRIVY_WALLET_ID_MAINNET` and/or `PRIVY_WALLET_ID_TESTNET` to the Privy wallet id used to sign gasless poll votes
 **Optional** Set `GASLESS_BACKDOOR_SECRET` to allow for bypassing the gasless voting eligibility checks by anyone with the password
 
 - Set `DASHBOARD_PASSWORD` for adding protection to the `/dashboard` route

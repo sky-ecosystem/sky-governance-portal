@@ -25,8 +25,7 @@ vi.mock('lib/config', () => ({
     PRIVY_WALLET_ID_MAINNET: 'wallet-mainnet',
     PRIVY_WALLET_ID_TESTNET: 'wallet-testnet',
     GASLESS_WEBHOOK_URL: 'https://discord.example/hook'
-  },
-  isPrivyRelayerEnabled: () => true
+  }
 }));
 
 const getTransactionReceipt = vi.fn();

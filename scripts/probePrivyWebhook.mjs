@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { privyGetWallet } from './_privyRest.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPath = resolve(__dirname, '..', '.env.local');
@@ -66,7 +67,8 @@ async function send(label, payload, { tamperSig = false } = {}) {
   console.log(`\n=== ${label} ===`);
   console.log('  status:', resp.status, resp.statusText);
   const text = await resp.text();
-  if (text) console.log('  body:  ', text.slice(0, 200));
+  if (text) console.log('  body:  ', text);
+  console.log('  sent svix-signature:', headers['svix-signature']);
 }
 
 // 1. Mimic Privy's synthetic dashboard test ping.
@@ -81,6 +83,52 @@ if (which === 'all' || which === 'test') {
     type: 'privy.test',
     message: 'tamper'
   }, { tamperSig: true });
+}
+
+// 3. Synthetic stuck-tx scenario: fake hash (so pre-flight finds no receipt) plus the
+//    wallet's REAL current nonce on Arbitrum One. The bump handler will compute bumped
+//    fees and broadcast a real replacement self-transfer via Privy. Costs ~$0.001.
+if (which === 'synthetic-bump') {
+  const walletId = process.env.PRIVY_WALLET_ID_MAINNET;
+  if (!walletId) {
+    console.error('PRIVY_WALLET_ID_MAINNET not set');
+    process.exit(1);
+  }
+  // Fetch the wallet's address + current nonce on Arbitrum One.
+  const wallet = await privyGetWallet(walletId);
+  const nonceResp = await fetch('https://arb1.arbitrum.io/rpc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'eth_getTransactionCount',
+      params: [wallet.address, 'pending']
+    })
+  });
+  const nonceJson = await nonceResp.json();
+  const nonce = parseInt(nonceJson.result, 16);
+  console.log(`\n[synthetic-bump] wallet ${wallet.address} pending nonce=${nonce}`);
+
+  await send('synthetic transaction.still_pending → real bump on Arbitrum One', {
+    type: 'transaction.still_pending',
+    transaction_id: `synth-${crypto.randomBytes(6).toString('hex')}`,
+    // Fake hash that won't have a receipt — guarantees pre-flight proceeds to the bump.
+    transaction_hash: `0x${'00'.repeat(31)}ff`,
+    wallet_id: walletId,
+    caip2: 'eip155:42161',
+    transaction_request: {
+      chain_id: 42161,
+      to: wallet.address,
+      data: '0x',
+      value: '0x0',
+      nonce,
+      // Realistic Arbitrum fees so the 1.4x bump lands at a value that actually mines.
+      max_priority_fee_per_gas: '0x5f5e100', // 0.1 gwei
+      max_fee_per_gas: '0x5f5e100',
+      type: 2
+    }
+  });
 }
 
 // 2. Mimic transaction.still_pending using the real Sepolia tx we already sent.
