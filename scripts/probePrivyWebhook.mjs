@@ -2,11 +2,13 @@
 // the handler without going through Privy itself.
 //
 // Usage:
-//   node scripts/probePrivyWebhook.mjs                                # default: test + still-pending (no on-chain effect)
+//   node scripts/probePrivyWebhook.mjs                                # default: still-pending against an already-mined tx (no on-chain effect)
 //   node scripts/probePrivyWebhook.mjs --url=https://staging/api/...  # different host
-//   node scripts/probePrivyWebhook.mjs --case=test                    # only privy.test (signed + tampered)
-//   node scripts/probePrivyWebhook.mjs --case=still-pending           # only still_pending against an already-mined tx
 //   node scripts/probePrivyWebhook.mjs --case=synthetic-bump          # WARNING: broadcasts a real Arbitrum One tx (~$0.001 gas)
+//
+// Note: signature verification itself is covered by the unit tests in
+// pages/api/webhooks/__tests__/privy.spec.ts, and Privy's dashboard "send test
+// event" button is the authoritative live-endpoint smoke. No --case=test here.
 
 import crypto from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -28,7 +30,7 @@ const args = Object.fromEntries(
   })
 );
 const URL = args.url || 'http://localhost:3000/api/webhooks/privy';
-const which = args.case || 'all';
+const which = args.case || 'still-pending';
 
 const secretRaw = process.env.PRIVY_WEBHOOK_SIGNING_SECRET;
 if (!secretRaw) {
@@ -52,14 +54,14 @@ function sign(body) {
   return { id, timestamp, signature: `v1,${sig}` };
 }
 
-async function send(label, payload, { tamperSig = false } = {}) {
+async function send(label, payload) {
   const body = JSON.stringify(payload);
   const { id, timestamp, signature } = sign(body);
   const headers = {
     'Content-Type': 'application/json',
     'svix-id': id,
     'svix-timestamp': timestamp,
-    'svix-signature': tamperSig ? 'v1,bogus' : signature
+    'svix-signature': signature
   };
   if (process.env.VERCEL_BYPASS_TOKEN) {
     headers['x-vercel-protection-bypass'] = process.env.VERCEL_BYPASS_TOKEN;
@@ -72,21 +74,7 @@ async function send(label, payload, { tamperSig = false } = {}) {
   console.log('  sent svix-signature:', headers['svix-signature']);
 }
 
-// 1. Mimic Privy's synthetic dashboard test ping.
-if (which === 'all' || which === 'test') {
-  await send('privy.test (mimics Privy dashboard ping)', {
-    type: 'privy.test',
-    message: 'Hello, World!'
-  });
-
-  // Sanity: a tampered signature must be rejected.
-  await send('privy.test with bogus signature (expect 401)', {
-    type: 'privy.test',
-    message: 'tamper'
-  }, { tamperSig: true });
-}
-
-// 3. Synthetic stuck-tx scenario: fake hash (so pre-flight finds no receipt) plus the
+// 1. Synthetic stuck-tx scenario: fake hash (so pre-flight finds no receipt) plus the
 //    wallet's REAL current nonce on Arbitrum One. The bump handler will compute bumped
 //    fees and broadcast a real replacement self-transfer via Privy. Costs ~$0.001.
 if (which === 'synthetic-bump') {
@@ -135,7 +123,7 @@ if (which === 'synthetic-bump') {
 // 2. Mimic transaction.still_pending using the real Sepolia tx we already sent.
 //    Because that tx is already mined on-chain, the bump handler's pre-flight
 //    receipt check should short-circuit BEFORE attempting to send a replacement.
-if (which === 'all' || which === 'still-pending') {
+if (which === 'still-pending') {
   // Use the Arbitrum One self-transfer we sent earlier so:
   //   - networkForWalletId resolves to MAINNET (first match in env), caip2 matches eip155:42161
   //   - the original tx hash is already mined on-chain → the on-chain pre-flight check
