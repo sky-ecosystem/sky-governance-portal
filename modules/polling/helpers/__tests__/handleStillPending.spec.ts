@@ -159,7 +159,8 @@ describe('handleStillPending', () => {
 
   // Arbitrum's sequencer is FIFO and most txs are broadcast with max_priority_fee_per_gas=0
   // (including ours — vote.ts doesn't set fees explicitly). Bumping is still useful: max_fee
-  // gets stretched 1.4x to cover any base-fee spike. Don't treat priority=0 as a fatal payload.
+  // gets stretched 1.4x to cover any base-fee spike. Priority gets the additive floor so the
+  // replacement satisfies any EIP-1559 "both fees must bump" replacement rule.
   it('bumps a tx with max_priority_fee_per_gas=0 (the normal Arbitrum case)', async () => {
     (cacheSetNX as Mock).mockResolvedValueOnce(true);
 
@@ -175,11 +176,25 @@ describe('handleStillPending', () => {
     expect(privySendTransaction).toHaveBeenCalledTimes(1);
     expect(postRequestToDiscord).not.toHaveBeenCalled();
     const opts = (privySendTransaction as Mock).mock.calls[0][1];
-    // priority remains 0 (0 * 1.4 / 1 = 0), max_fee bumps 1.4x
-    expect(BigInt(opts.transaction.max_priority_fee_per_gas)).toBe(0n);
+    // priority gets the additive floor (0 + 0.01 gwei) since multiplicative bump of 0 is 0
+    expect(BigInt(opts.transaction.max_priority_fee_per_gas)).toBe(__testables.MIN_PRIORITY_BUMP);
+    // max_fee bumps 1.4x
     expect(BigInt(opts.transaction.max_fee_per_gas)).toBe(
       (parseGwei('0.5') * 14n) / 10n
     );
+  });
+
+  // When current priority is non-trivial, the multiplicative bump (1.4x) wins over the
+  // additive floor (current + 0.01 gwei). E.g., 0.1 gwei * 1.4 = 0.14 > 0.1 + 0.01 = 0.11.
+  it('uses multiplicative bump when it exceeds the additive floor', async () => {
+    (cacheSetNX as Mock).mockResolvedValueOnce(true);
+
+    await handleStillPending(validPayload); // priority = 0.1 gwei
+
+    const opts = (privySendTransaction as Mock).mock.calls[0][1];
+    const original = BigInt(validPayload.transaction_request.max_priority_fee_per_gas);
+    // 0.1 gwei * 1.4 = 0.14 gwei (multiplicative wins)
+    expect(BigInt(opts.transaction.max_priority_fee_per_gas)).toBe((original * 14n) / 10n);
   });
 
   it('aborts when max_fee_per_gas is missing from the payload', async () => {

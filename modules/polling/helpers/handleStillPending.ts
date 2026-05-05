@@ -26,6 +26,12 @@ const MAX_BUMP_ATTEMPTS = 2;
 // base_fee), so capping priority alone bounds our overpayment; max_fee stays uncapped to
 // stretch over any base-fee spike.
 const ABSOLUTE_PRIORITY_FEE_CEILING = parseGwei('1');
+// Additive floor for priority bumps: a multiplicative 1.4× bump on a 0 priority fee
+// (Arbitrum's normal case) yields 0, which fails strict EIP-1559 replacement rules
+// ("both max_fee and max_priority must be ≥ ~12.5% higher"). 0.01 gwei is well above
+// Arbitrum's typical sub-0.01 gwei priority and costs a negligible fraction of a cent
+// per gas — guarantees the priority field actually changes across attempts.
+const MIN_PRIORITY_BUMP = parseGwei('0.01');
 const BUMP_ATTEMPT_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 // Webhook payload shape from Privy's transaction.still_pending event.
@@ -166,7 +172,9 @@ export async function handleStillPending(rawPayload: Record<string, unknown>): P
     return;
   }
 
-  const bumpedPriorityFee = bump(currentPriority);
+  const multiplicativeBump = bump(currentPriority);
+  const additiveBump = currentPriority + MIN_PRIORITY_BUMP;
+  const bumpedPriorityFee = multiplicativeBump > additiveBump ? multiplicativeBump : additiveBump;
   if (bumpedPriorityFee > ABSOLUTE_PRIORITY_FEE_CEILING) {
     await alert(
       `Privy bump aborted for tx ${transaction_id}: priority fee ${bumpedPriorityFee} would exceed ceiling ${ABSOLUTE_PRIORITY_FEE_CEILING}. Something is abnormal.`
@@ -204,5 +212,6 @@ export async function handleStillPending(rawPayload: Record<string, unknown>): P
 export const __testables = {
   bump,
   ABSOLUTE_PRIORITY_FEE_CEILING,
-  MAX_BUMP_ATTEMPTS
+  MAX_BUMP_ATTEMPTS,
+  MIN_PRIORITY_BUMP
 };
