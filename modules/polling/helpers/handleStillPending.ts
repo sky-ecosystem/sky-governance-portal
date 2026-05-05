@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 */
 
-import { parseGwei, numberToHex } from 'viem';
+import { parseGwei, numberToHex, toFunctionSelector } from 'viem';
 import { config } from 'lib/config';
 import { privySendTransaction } from 'lib/privyRest';
 import { cacheSetNX } from 'modules/cache/cache';
@@ -14,6 +14,7 @@ import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { postRequestToDiscord } from 'modules/app/api/postRequestToDiscord';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
+import { pollingArbitrumAddress } from 'modules/contracts/generated';
 import { getPrivyWalletConfig } from './relayerCredentials';
 import logger from 'lib/logger';
 
@@ -33,6 +34,14 @@ const ABSOLUTE_PRIORITY_FEE_CEILING = parseGwei('1');
 // per gas — guarantees the priority field actually changes across attempts.
 const MIN_PRIORITY_BUMP = parseGwei('0.01');
 const BUMP_ATTEMPT_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+// vote.ts always builds calldata with this exact ABI signature (the EIP-712 signing variant
+// of `vote`). Cross-checking the bump payload's data against this selector ensures the
+// webhook can't be forged to redirect the relayer wallet's funds to an arbitrary contract
+// call, even if PRIVY_WEBHOOK_SIGNING_SECRET leaks in isolation from PRIVY_APP_SECRET.
+const EXPECTED_VOTE_SELECTOR = toFunctionSelector(
+  'vote(address,uint256,uint256,uint256[],uint256[],uint8,bytes32,bytes32)'
+);
 
 // Webhook payload shape from Privy's transaction.still_pending event.
 // Flat structure with transaction_request nested, all snake_case.
@@ -127,10 +136,43 @@ export async function handleStillPending(rawPayload: Record<string, unknown>): P
   }
 
   const network = networkForWalletId(wallet_id);
-  const { caip2: configuredCaip2 } = getPrivyWalletConfig(network);
+  const { caip2: configuredCaip2, chainId: configuredChainId } = getPrivyWalletConfig(network);
   if (caip2 !== configuredCaip2) {
     await alert(
       `Privy bump aborted: payload caip2 ${caip2} does not match configured ${configuredCaip2} for wallet ${wallet_id}.`
+    );
+    return;
+  }
+
+  // The only legitimate origin of a bump-eligible tx is vote.ts, which always sends to the
+  // polling contract with vote-selector calldata and zero ETH value. Cross-check each field
+  // so a forged webhook cannot redirect the relayer wallet (see EXPECTED_VOTE_SELECTOR).
+  const expectedTo = pollingArbitrumAddress[configuredChainId as keyof typeof pollingArbitrumAddress];
+  if (!expectedTo || transaction_request.to.toLowerCase() !== expectedTo.toLowerCase()) {
+    await alert(
+      `Privy bump aborted for tx ${transaction_id}: to=${transaction_request.to} does not match polling contract ${expectedTo} on chain ${configuredChainId}.`
+    );
+    return;
+  }
+  const data = transaction_request.data;
+  if (!data || data.length < 10 || data.slice(0, 10).toLowerCase() !== EXPECTED_VOTE_SELECTOR.toLowerCase()) {
+    await alert(
+      `Privy bump aborted for tx ${transaction_id}: data selector does not match the vote function selector.`
+    );
+    return;
+  }
+  if (transaction_request.value !== undefined && BigInt(transaction_request.value) !== 0n) {
+    await alert(
+      `Privy bump aborted for tx ${transaction_id}: value=${transaction_request.value} is nonzero; vote txs never transfer ETH.`
+    );
+    return;
+  }
+  if (
+    transaction_request.chain_id !== undefined &&
+    BigInt(transaction_request.chain_id) !== BigInt(configuredChainId)
+  ) {
+    await alert(
+      `Privy bump aborted for tx ${transaction_id}: chain_id=${transaction_request.chain_id} does not match configured ${configuredChainId} for wallet ${wallet_id}.`
     );
     return;
   }
@@ -195,6 +237,10 @@ export async function handleStillPending(rawPayload: Record<string, unknown>): P
           transaction_request.chain_id !== undefined
             ? numberToHex(transaction_request.chain_id)
             : undefined,
+        // Forward the original gas_limit so Privy doesn't re-estimate. In a stuck-tx
+        // scenario the original was already gas-validated at submission, and re-estimation
+        // can fail under the same network conditions that caused the stall.
+        gas_limit: transaction_request.gas_limit,
         max_priority_fee_per_gas: numberToHex(bumpedPriorityFee),
         max_fee_per_gas: numberToHex(bumpedMaxFee)
       },

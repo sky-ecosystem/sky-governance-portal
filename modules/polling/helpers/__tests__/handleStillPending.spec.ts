@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { parseGwei } from 'viem';
+import { parseGwei, toFunctionSelector } from 'viem';
 import { handleStillPending, __testables } from '../handleStillPending';
 import { cacheSetNX } from 'modules/cache/cache';
 import { privySendTransaction } from 'lib/privyRest';
@@ -42,6 +42,15 @@ beforeEach(() => {
   getTransactionReceipt.mockRejectedValue(new Error('not found'));
 });
 
+const POLLING_ARBITRUM_ONE = '0x4f4e551b4920a5417F8d4e7f8f099660dAdadcEC';
+const POLLING_ARBITRUM_SEPOLIA = '0xE63329692fA90B3efd5eB675c601abeDB2DF715a';
+const VOTE_SELECTOR = toFunctionSelector(
+  'vote(address,uint256,uint256,uint256[],uint256[],uint8,bytes32,bytes32)'
+);
+// Selector + 32 bytes of zero-padded args. Just enough to pass the selector check; the
+// handler doesn't decode the args.
+const VOTE_CALLDATA = `${VOTE_SELECTOR}${'00'.repeat(32)}` as `0x${string}`;
+
 const validPayload = {
   type: 'transaction.still_pending',
   transaction_id: 'tx-123',
@@ -50,8 +59,8 @@ const validPayload = {
   caip2: 'eip155:42161',
   transaction_request: {
     chain_id: 42161,
-    to: '0xPolling',
-    data: '0xabcd',
+    to: POLLING_ARBITRUM_ONE,
+    data: VOTE_CALLDATA,
     value: '0x0',
     nonce: 7,
     max_priority_fee_per_gas: parseGwei('0.1').toString(),
@@ -63,7 +72,10 @@ describe('handleStillPending', () => {
   it('claims slot 1 on first attempt and bumps fees by 1.4x', async () => {
     (cacheSetNX as Mock).mockResolvedValueOnce(true);
 
-    await handleStillPending(validPayload);
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: { ...validPayload.transaction_request, gas_limit: '0x30d40' }
+    });
 
     expect(cacheSetNX).toHaveBeenCalledTimes(1);
     expect(privySendTransaction).toHaveBeenCalledTimes(1);
@@ -71,7 +83,10 @@ describe('handleStillPending', () => {
     expect(walletId).toBe('wallet-mainnet');
     expect(opts.caip2).toBe('eip155:42161');
     expect(opts.transaction.nonce).toBe(7);
-    expect(opts.transaction.to).toBe('0xPolling');
+    expect(opts.transaction.to).toBe(POLLING_ARBITRUM_ONE);
+    // gas_limit forwarded so Privy skips re-estimation under the same conditions that
+    // caused the original stall.
+    expect(opts.transaction.gas_limit).toBe('0x30d40');
     // 0.1 gwei * 1.4 = 0.14 gwei
     expect(BigInt(opts.transaction.max_priority_fee_per_gas)).toBe(
       (BigInt(validPayload.transaction_request.max_priority_fee_per_gas) * 14n) / 10n
@@ -151,7 +166,11 @@ describe('handleStillPending', () => {
       ...validPayload,
       wallet_id: 'wallet-testnet',
       caip2: 'eip155:421614',
-      transaction_request: { ...validPayload.transaction_request, chain_id: 421614 }
+      transaction_request: {
+        ...validPayload.transaction_request,
+        chain_id: 421614,
+        to: POLLING_ARBITRUM_SEPOLIA
+      }
     });
 
     expect((privySendTransaction as Mock).mock.calls[0][1].caip2).toBe('eip155:421614');
@@ -226,6 +245,98 @@ describe('handleStillPending', () => {
     expect(privySendTransaction).not.toHaveBeenCalled();
     const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
     expect(content).toMatch(/max_fee_per_gas is 0/i);
+  });
+
+  // Defense-in-depth checks against a forged webhook payload (e.g., if
+  // PRIVY_WEBHOOK_SIGNING_SECRET leaked in isolation from PRIVY_APP_SECRET): the bump path
+  // must not be usable to redirect the relayer wallet's funds.
+  it('aborts and does not claim a slot when `to` is not the polling contract', async () => {
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: {
+        ...validPayload.transaction_request,
+        to: '0x000000000000000000000000000000000000dEaD'
+      }
+    });
+
+    expect(cacheSetNX).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
+    const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
+    expect(content).toMatch(/does not match polling contract/i);
+  });
+
+  it('accepts `to` regardless of address checksum case', async () => {
+    (cacheSetNX as Mock).mockResolvedValueOnce(true);
+
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: {
+        ...validPayload.transaction_request,
+        to: POLLING_ARBITRUM_ONE.toLowerCase()
+      }
+    });
+
+    expect(privySendTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts when `data` is missing', async () => {
+    const { data: _omit, ...rest } = validPayload.transaction_request;
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: rest
+    });
+
+    expect(cacheSetNX).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
+    const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
+    expect(content).toMatch(/selector does not match/i);
+  });
+
+  it('aborts when `data` selector is not the vote selector', async () => {
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: {
+        ...validPayload.transaction_request,
+        // ERC20 transfer(address,uint256) selector — definitely not vote()
+        data: `0xa9059cbb${'00'.repeat(32)}` as `0x${string}`
+      }
+    });
+
+    expect(cacheSetNX).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
+    const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
+    expect(content).toMatch(/selector does not match/i);
+  });
+
+  it('aborts when `value` is nonzero', async () => {
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: {
+        ...validPayload.transaction_request,
+        value: '0x1'
+      }
+    });
+
+    expect(cacheSetNX).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
+    const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
+    expect(content).toMatch(/is nonzero/i);
+  });
+
+  it('aborts when `chain_id` does not match the wallet network', async () => {
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: {
+        ...validPayload.transaction_request,
+        // mainnet wallet expects 42161; lie about the chain
+        chain_id: 1
+      }
+    });
+
+    expect(cacheSetNX).not.toHaveBeenCalled();
+    expect(privySendTransaction).not.toHaveBeenCalled();
+    const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
+    expect(content).toMatch(/chain_id=1 does not match/i);
   });
 });
 

@@ -99,6 +99,10 @@ if (which === 'synthetic-bump') {
   const nonce = parseInt(nonceJson.result, 16);
   console.log(`\n[synthetic-bump] wallet ${wallet.address} pending nonce=${nonce}`);
 
+  // Target the polling contract with the vote() selector + 32 zero bytes so the payload
+  // passes handleStillPending's to/data/value/chain_id validation. The on-chain call will
+  // revert (zero-padded args are not a valid vote() encoding), but the bump path itself
+  // broadcasts — which is what we're proving works end-to-end. Cost ~$0.001 for the revert.
   await send('synthetic transaction.still_pending → real bump on Arbitrum One', {
     type: 'transaction.still_pending',
     transaction_id: `synth-${crypto.randomBytes(6).toString('hex')}`,
@@ -108,10 +112,12 @@ if (which === 'synthetic-bump') {
     caip2: 'eip155:42161',
     transaction_request: {
       chain_id: 42161,
-      to: wallet.address,
-      data: '0x',
+      to: '0x4f4e551b4920a5417F8d4e7f8f099660dAdadcEC',
+      data: `0x571da1d2${'00'.repeat(32)}`,
       value: '0x0',
       nonce,
+      // Provided so Privy skips simulation (it would otherwise refuse the will-revert call).
+      gas_limit: '0x30d40', // 200,000
       // Realistic Arbitrum fees so the 1.4x bump lands at a value that actually mines.
       max_priority_fee_per_gas: '0x5f5e100', // 0.1 gwei
       max_fee_per_gas: '0x5f5e100',
@@ -124,10 +130,18 @@ if (which === 'synthetic-bump') {
 //    Because that tx is already mined on-chain, the bump handler's pre-flight
 //    receipt check should short-circuit BEFORE attempting to send a replacement.
 if (which === 'still-pending') {
-  // Use the Arbitrum One self-transfer we sent earlier so:
-  //   - networkForWalletId resolves to MAINNET (first match in env), caip2 matches eip155:42161
-  //   - the original tx hash is already mined on-chain → the on-chain pre-flight check
-  //     short-circuits and the handler bails BEFORE sending a replacement (safe to run repeatedly)
+  // Payload shaped like a legitimate vote so it passes handleStillPending's
+  // to/data/value/chain_id validation, but transaction_hash points to a tx that's already
+  // mined on-chain → the on-chain pre-flight check short-circuits and the handler bails
+  // BEFORE sending a replacement (safe to run repeatedly).
+  //
+  // `to` is Arbitrum One's polling contract; `data` is the vote() selector
+  // (keccak256('vote(address,uint256,uint256,uint256[],uint256[],uint8,bytes32,bytes32)')[0..4])
+  // padded with 32 zero bytes — not a valid vote() encoding (the real call needs encoded
+  // address + uint256s + array offsets/lengths), but handleStillPending only inspects the
+  // 4-byte selector, so this is enough to pass the validation. We never reach broadcast
+  // anyway because the already-mined pre-flight short-circuits first.
+  const VOTE_SELECTOR = '0x571da1d2';
   await send('transaction.still_pending against an already-mined Arbitrum One tx (expect 200, no bump)', {
     type: 'transaction.still_pending',
     transaction_id: '9977fc09-d82d-4e08-9ca5-4e975ba8320d',
@@ -136,8 +150,8 @@ if (which === 'still-pending') {
     caip2: 'eip155:42161',
     transaction_request: {
       chain_id: 42161,
-      to: '0xBa5Bde1E0aB1Deb2CBeea43884C9307A207301e7',
-      data: '0x',
+      to: '0x4f4e551b4920a5417F8d4e7f8f099660dAdadcEC',
+      data: `${VOTE_SELECTOR}${'00'.repeat(32)}`,
       value: '0x0',
       nonce: 0,
       max_priority_fee_per_gas: '0x5f5e100',
