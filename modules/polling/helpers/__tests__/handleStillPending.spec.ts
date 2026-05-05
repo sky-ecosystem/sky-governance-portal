@@ -156,6 +156,62 @@ describe('handleStillPending', () => {
 
     expect((privySendTransaction as Mock).mock.calls[0][1].caip2).toBe('eip155:421614');
   });
+
+  // Arbitrum's sequencer is FIFO and most txs are broadcast with max_priority_fee_per_gas=0
+  // (including ours — vote.ts doesn't set fees explicitly). Bumping is still useful: max_fee
+  // gets stretched 1.4x to cover any base-fee spike. Don't treat priority=0 as a fatal payload.
+  it('bumps a tx with max_priority_fee_per_gas=0 (the normal Arbitrum case)', async () => {
+    (cacheSetNX as Mock).mockResolvedValueOnce(true);
+
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: {
+        ...validPayload.transaction_request,
+        max_priority_fee_per_gas: '0x0',
+        max_fee_per_gas: parseGwei('0.5').toString()
+      }
+    });
+
+    expect(privySendTransaction).toHaveBeenCalledTimes(1);
+    expect(postRequestToDiscord).not.toHaveBeenCalled();
+    const opts = (privySendTransaction as Mock).mock.calls[0][1];
+    // priority remains 0 (0 * 1.4 / 1 = 0), max_fee bumps 1.4x
+    expect(BigInt(opts.transaction.max_priority_fee_per_gas)).toBe(0n);
+    expect(BigInt(opts.transaction.max_fee_per_gas)).toBe(
+      (parseGwei('0.5') * 14n) / 10n
+    );
+  });
+
+  it('aborts when max_fee_per_gas is missing from the payload', async () => {
+    (cacheSetNX as Mock).mockResolvedValueOnce(true);
+
+    const { max_fee_per_gas: _omit, ...rest } = validPayload.transaction_request;
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: rest
+    });
+
+    expect(privySendTransaction).not.toHaveBeenCalled();
+    const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
+    expect(content).toMatch(/max_fee_per_gas missing/i);
+  });
+
+  it('aborts when max_fee_per_gas is 0', async () => {
+    (cacheSetNX as Mock).mockResolvedValueOnce(true);
+
+    await handleStillPending({
+      ...validPayload,
+      transaction_request: {
+        ...validPayload.transaction_request,
+        max_priority_fee_per_gas: parseGwei('0.1').toString(),
+        max_fee_per_gas: '0x0'
+      }
+    });
+
+    expect(privySendTransaction).not.toHaveBeenCalled();
+    const content = (postRequestToDiscord as Mock).mock.calls[0][0].content as string;
+    expect(content).toMatch(/max_fee_per_gas is 0/i);
+  });
 });
 
 describe('__testables.bump', () => {

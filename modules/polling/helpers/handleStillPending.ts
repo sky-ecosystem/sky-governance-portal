@@ -144,11 +144,24 @@ export async function handleStillPending(rawPayload: Record<string, unknown>): P
     return;
   }
 
-  const currentPriority = BigInt(transaction_request.max_priority_fee_per_gas ?? '0');
-  const currentMaxFee = BigInt(transaction_request.max_fee_per_gas ?? '0');
-  if (currentPriority === 0n || currentMaxFee === 0n) {
+  // Arbitrum's sequencer is FIFO and most txs (including ours, which don't set fees explicitly)
+  // are sent with max_priority_fee_per_gas = 0. Treating priority=0 as "couldn't read fees"
+  // would dead-lock the bump path for the realistic stuck-tx case. Only max_fee_per_gas
+  // matters for bumping on Arbitrum (it has to stretch over a rising base fee), so that's
+  // the only field whose absence or zero value blocks the bump.
+  const priorityHex = transaction_request.max_priority_fee_per_gas;
+  const maxFeeHex = transaction_request.max_fee_per_gas;
+  if (maxFeeHex === undefined || maxFeeHex === null) {
     await alert(
-      `Privy bump aborted for tx ${transaction_id}: cannot read current fees from transaction_request.`
+      `Privy bump aborted for tx ${transaction_id}: max_fee_per_gas missing from transaction_request.`
+    );
+    return;
+  }
+  const currentPriority = priorityHex !== undefined && priorityHex !== null ? BigInt(priorityHex) : 0n;
+  const currentMaxFee = BigInt(maxFeeHex);
+  if (currentMaxFee === 0n) {
+    await alert(
+      `Privy bump aborted for tx ${transaction_id}: max_fee_per_gas is 0, cannot bump.`
     );
     return;
   }
