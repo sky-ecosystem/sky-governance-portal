@@ -18,7 +18,7 @@ import logger from 'lib/logger';
 // serverless runtime. Webhook verification has no need for HPKE.
 const TIMESTAMP_TOLERANCE_SEC = 5 * 60;
 
-function verifySvixSignature(
+export function verifySvixSignature(
   rawBody: string,
   svixId: string,
   svixTimestamp: string,
