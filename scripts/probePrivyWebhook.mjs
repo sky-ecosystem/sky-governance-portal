@@ -2,10 +2,11 @@
 // the handler without going through Privy itself.
 //
 // Usage:
-//   node scripts/probePrivyWebhook.mjs                                # both scenarios against local
+//   node scripts/probePrivyWebhook.mjs                                # default: test + still-pending (no on-chain effect)
 //   node scripts/probePrivyWebhook.mjs --url=https://staging/api/...  # different host
-//   node scripts/probePrivyWebhook.mjs --case=test                    # only privy.test
-//   node scripts/probePrivyWebhook.mjs --case=still-pending           # only transaction.still_pending
+//   node scripts/probePrivyWebhook.mjs --case=test                    # only privy.test (signed + tampered)
+//   node scripts/probePrivyWebhook.mjs --case=still-pending           # only still_pending against an already-mined tx
+//   node scripts/probePrivyWebhook.mjs --case=synthetic-bump          # WARNING: broadcasts a real Arbitrum One tx (~$0.001 gas)
 
 import crypto from 'node:crypto';
 import { readFileSync } from 'node:fs';
