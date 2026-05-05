@@ -69,9 +69,11 @@ function authHeaders(): Record<string, string> {
 
 async function request<T>(path: string, init: RequestInit & { extraHeaders?: Record<string, string> } = {}): Promise<T> {
   const { extraHeaders, ...rest } = init;
+  // Auth headers go last so neither caller-supplied init.headers nor extraHeaders can
+  // accidentally override Authorization / privy-app-id.
   const resp = await fetch(`${PRIVY_API_BASE}${path}`, {
     ...rest,
-    headers: { ...authHeaders(), ...extraHeaders, ...(init.headers ?? {}) }
+    headers: { ...(init.headers ?? {}), ...extraHeaders, ...authHeaders() }
   });
   if (!resp.ok) {
     let detail = '';
