@@ -82,6 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const svixTimestamp = req.headers['svix-timestamp'];
   const svixSignature = req.headers['svix-signature'];
   if (typeof svixId !== 'string' || typeof svixTimestamp !== 'string' || typeof svixSignature !== 'string') {
+    logger.warn('Privy webhook: missing or invalid svix-id / svix-timestamp / svix-signature headers');
     res.status(401).end();
     return;
   }
