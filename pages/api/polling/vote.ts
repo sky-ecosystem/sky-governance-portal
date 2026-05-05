@@ -13,7 +13,7 @@ import { cacheSet, cacheDel } from 'modules/cache/cache';
 import { GASLESS_RATE_LIMIT_IN_MS } from 'modules/polling/polling.constants';
 import { getRecentlyUsedGaslessVotingKey } from 'modules/cache/constants/cache-keys';
 import { config } from 'lib/config';
-import { privySendTransaction } from 'lib/privyRest';
+import { privySendTransaction, privyGetWalletAddress } from 'lib/privyRest';
 import { getPrivyWalletConfig } from 'modules/polling/helpers/relayerCredentials';
 import { pollingArbitrumAddress } from 'modules/contracts/generated';
 import logger from 'lib/logger';
@@ -228,7 +228,12 @@ export default withApiHandler(
       });
 
       const { walletId, caip2 } = getPrivyWalletConfig(network);
-      const estimatedGas = await publicClient.estimateGas({ to: pollingAddress, data });
+      const relayerAddress = await privyGetWalletAddress(walletId);
+      const estimatedGas = await publicClient.estimateGas({
+        to: pollingAddress,
+        data,
+        account: relayerAddress
+      });
       // 20% buffer to account for sub-block variability between estimate and broadcast.
       const gasWithBuffer = (estimatedGas * 120n) / 100n;
 

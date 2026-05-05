@@ -91,6 +91,19 @@ export async function privyGetWallet(
   return request(`/v1/wallets/${encodeURIComponent(walletId)}`);
 }
 
+// Memoize wallet-id → address. Privy server-wallet addresses never change for a wallet id,
+// so a single lookup per process is enough. Shared between gas-estimation in vote.ts and
+// the balance check in getRelayerBalance.ts.
+const walletAddressCache: Record<string, `0x${string}`> = {};
+
+export async function privyGetWalletAddress(walletId: string): Promise<`0x${string}`> {
+  if (walletAddressCache[walletId]) return walletAddressCache[walletId];
+  const wallet = await privyGetWallet(walletId);
+  const address = wallet.address as `0x${string}`;
+  walletAddressCache[walletId] = address;
+  return address;
+}
+
 export async function privyGetTransaction(transactionId: string): Promise<PrivyTransactionRecord> {
   return request(`/v1/transactions/${encodeURIComponent(transactionId)}`);
 }

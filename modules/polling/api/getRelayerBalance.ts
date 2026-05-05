@@ -11,19 +11,8 @@ import { formatEther } from 'viem';
 import logger from 'lib/logger';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
-import { privyGetWallet } from 'lib/privyRest';
+import { privyGetWalletAddress } from 'lib/privyRest';
 import { getPrivyWalletConfig } from '../helpers/relayerCredentials';
-
-// Memoize wallet-id → address. Privy server-wallet addresses never change for a wallet id,
-// so a single lookup per process is enough.
-const privyAddressCache: Record<string, string> = {};
-
-async function resolvePrivyAddress(walletId: string): Promise<string> {
-  if (privyAddressCache[walletId]) return privyAddressCache[walletId];
-  const wallet = await privyGetWallet(walletId);
-  privyAddressCache[walletId] = wallet.address;
-  return wallet.address;
-}
 
 export const getRelayerBalance = async (network: SupportedNetworks): Promise<string> => {
   try {
@@ -33,9 +22,9 @@ export const getRelayerBalance = async (network: SupportedNetworks): Promise<str
 
     const gaslessPublicClient = getGaslessPublicClient(networkNameToChainId(network));
     const { walletId } = getPrivyWalletConfig(network);
-    const address = await resolvePrivyAddress(walletId);
+    const address = await privyGetWalletAddress(walletId);
 
-    const balance = await gaslessPublicClient.getBalance({ address: address as `0x${string}` });
+    const balance = await gaslessPublicClient.getBalance({ address });
     return formatEther(balance);
   } catch (err) {
     logger.error(err);
