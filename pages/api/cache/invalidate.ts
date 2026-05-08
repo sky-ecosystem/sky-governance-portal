@@ -16,6 +16,7 @@ import {
   executiveSupportersCacheKey,
   githubExecutivesCacheKey,
   executiveProposalsCacheKey,
+  pollDetailsCacheKey,
   pollListCacheKey,
   partialActivePollsCacheKey,
   pollTagsDefinitionJSONCacheKey,
@@ -43,6 +44,7 @@ export default withApiHandler(
 
     const pollsAllowedCacheKeys = [
       'parsed-tally-',
+      pollDetailsCacheKey,
       pollListCacheKey,
       partialActivePollsCacheKey,
       pollTagsDefinitionJSONCacheKey,

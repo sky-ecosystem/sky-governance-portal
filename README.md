@@ -14,16 +14,16 @@ While the portal is hosted by Sky at https://vote.makerdao.com, it can also be r
 
 In order to run the project locally, you must have the following installed on the machine:
 
-- Node, version 18.17 or greater (up to version 20.x) ([install](https://nodejs.dev/learn/how-to-install-nodejs))
+- Node, version 24 or greater ([install](https://nodejs.dev/learn/how-to-install-nodejs))
 
 To get started, clone the repository to the desired directory and then navigate into the project folder:
 
 ```bash
 # clones repo
-git clone https://github.com/makerdao/governance-portal-v2.git
+git clone https://github.com/makerdao/sky-governance-portal.git
 
 # changes directory to cloned project folder
-cd governance-portal-v2
+cd sky-governance-portal
 ```
 
 Next, install the project's dependencies using [pnpm](https://pnpm.io/installation):
@@ -44,7 +44,7 @@ At this point, you should be able to access the application by going to the addr
 
 To do releases of the governance portal, please use `npm version minor` or `npm version patch` to bump the version in the package.json and create a tag.
 
-The tag and versioning should be done on develop, and then merged to master through a PR. To push your local tag use the command `git push origin develop --follow-tags`.
+The tag and versioning should be done on development, and then merged to main through a PR. To push your local tag use the command `git push origin development --follow-tags`.
 
 ### Additional configuration overview:
 
@@ -52,7 +52,7 @@ The tag and versioning should be done on develop, and then merged to master thro
 
 The portal seeks to rely on on-chain data as much as possible and to minimize reliance on data stored on centralized servers. However, due to the large volume of data that is relevant to Sky governance, fetching this data from on-chain is both time and resource-intensive. In order to improve the user's experience, some reliance on third-party services has been added, and we recommend a few configuration steps for optimal use. These services include:
 
-- [GitHub](https://github.com/makerdao/community/tree/master/governance) for storing markdown related to [polls](https://github.com/makerdao/community/tree/master/governance/polls), [executives](https://github.com/makerdao/community/tree/master/governance/votes), and [aligned delegates](https://github.com/makerdao/community/tree/master/governance/delegates)
+- [GitHub](https://github.com/sky-ecosystem) for storing markdown related to [polls](https://github.com/sky-ecosystem/polls), [executives](https://github.com/sky-ecosystem/executive-votes), and [delegates](https://github.com/sky-ecosystem/delegates)
 
 #### Network providers
 
@@ -78,7 +78,7 @@ The following configuration values can be added to the `.env` file:
 
 - Set `GASLESS_DISABLED` to `true` to disable gasless voting in UI (pre-check endpoint will fail)
 
-- Set `NEXT_PUBLIC_VERCEL_ENV` to `development` to use development environment databases
+- Set `NEXT_PUBLIC_VERCEL_ENV` to `development` to use staging data sources (subgraphs and GitHub repos)
 
 #### Optional (DUX-specific config, no performance improvements):
 

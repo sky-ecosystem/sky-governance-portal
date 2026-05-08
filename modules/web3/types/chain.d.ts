@@ -17,11 +17,7 @@ export type SupportedChain = {
   chainId: SupportedChainId;
   label: string;
   network: SupportedNetworks;
-  defaultRpc: string;
   subgraphUrl?: string;
   type: 'gasless' | 'normal';
   showInProduction: boolean;
-  rpcs: {
-    [key: string]: string;
-  };
 };

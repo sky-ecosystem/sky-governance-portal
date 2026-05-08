@@ -19,6 +19,7 @@ import {
   getPollTallyCacheKey,
   githubExecutivesCacheKey,
   executiveProposalsCacheKey,
+  pollDetailsCacheKey,
   pollListCacheKey,
   partialActivePollsCacheKey,
   pollTagsDefinitionJSONCacheKey,
@@ -127,6 +128,7 @@ const DashboardPage = (): React.ReactElement => {
                       onClick={() => {
                         invalidate(pollTagsDefinitionJSONCacheKey);
                         invalidate(pollTagsMappingJSONCacheKey);
+                        invalidate(pollDetailsCacheKey);
                         invalidate(pollListCacheKey);
                         invalidate(partialActivePollsCacheKey);
                       }}
@@ -193,6 +195,14 @@ const DashboardPage = (): React.ReactElement => {
                   <Text sx={{ fontWeight: 'semiBold' }}>Poll list:</Text>
                   {cacheInfo[pollListCacheKey] > 0 ? (
                     <Text sx={{ ml: 2 }}>{`Expires in ${cacheInfo[pollListCacheKey]} seconds`}</Text>
+                  ) : (
+                    <Text sx={{ ml: 2 }}>No cache found</Text>
+                  )}
+                </Flex>
+                <Flex sx={{ mt: 2 }}>
+                  <Text sx={{ fontWeight: 'semiBold' }}>Poll details:</Text>
+                  {cacheInfo[pollDetailsCacheKey] > 0 ? (
+                    <Text sx={{ ml: 2 }}>{`Expires in ${cacheInfo[pollDetailsCacheKey]} seconds`}</Text>
                   ) : (
                     <Text sx={{ ml: 2 }}>No cache found</Text>
                   )}
