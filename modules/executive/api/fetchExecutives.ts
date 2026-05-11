@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { DEFAULT_NETWORK, SupportedNetworks } from 'modules/web3/constants/networks';
 import { cacheGet, cacheSet } from 'modules/cache/cache';
-import { CMSProposal, Proposal, GithubProposal } from 'modules/executive/types';
+import { CMSProposal, Proposal, GithubProposal, SpellData } from 'modules/executive/types';
 import { parseExecutive } from './parseExecutive';
 import invariant from 'tiny-invariant';
 import { markdownToHtml } from 'lib/markdown';
@@ -205,35 +205,35 @@ export async function getExecutiveProposal(
   );
 
   if (!proposal) {
-    // Fall back to on-chain spell data when the id is a valid address that
-    // isn't in the github executive-votes index. Without this, deep links to
-    // older or unindexed spells return 404 (APP-244). We only render when
-    // description() returned an executive hash, which confirms the address is
-    // an actual DSS spell rather than an arbitrary EOA.
+    // Fall back to rendering a minimal page when the id is a valid address
+    // that isn't in the github executive-votes index. Without this, deep links
+    // to older or unindexed spells return 404 (APP-244). We attempt to enrich
+    // with on-chain spell data via analyzeSpell, but render even if that fails
+    // — matches the /custom-spell/[address] behavior and avoids 404s when the
+    // RPC proxy is unreachable (e.g. from some preview environments).
     if (isAddress(proposalId, { strict: false })) {
+      let spellData: SpellData = {
+        hasBeenScheduled: false,
+        skySupport: '0'
+      };
       try {
-        const spellData = await analyzeSpell(proposalId, currentNetwork);
-        if (spellData.executiveHash) {
-          return {
-            active: false,
-            address: proposalId,
-            key: proposalId.toLowerCase(),
-            proposalBlurb: '',
-            title: '',
-            date: '',
-            proposalLink: '',
-            spellData
-          };
-        }
-        logger.warn(
-          `getExecutiveProposal: ${proposalId} not in github index and description() returned no executive hash on ${currentNetwork} — treating as not-a-spell`
-        );
+        spellData = await analyzeSpell(proposalId, currentNetwork);
       } catch (e) {
         logger.error(
-          `getExecutiveProposal: on-chain fallback failed for ${proposalId} on ${currentNetwork}`,
+          `getExecutiveProposal: analyzeSpell threw for ${proposalId} on ${currentNetwork}, rendering page without on-chain data`,
           e
         );
       }
+      return {
+        active: false,
+        address: proposalId,
+        key: proposalId.toLowerCase(),
+        proposalBlurb: '',
+        title: '',
+        date: '',
+        proposalLink: '',
+        spellData
+      };
     }
     return null;
   }
