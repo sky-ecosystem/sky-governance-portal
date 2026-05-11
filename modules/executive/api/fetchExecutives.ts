@@ -195,15 +195,7 @@ export async function getExecutiveProposal(
 
   const currentNetwork = net;
 
-  // APP-244 TRACE: remove after debugging
-  logger.info(`[APP-244] getExecutiveProposal start id=${proposalId} network=${currentNetwork}`);
-
   const proposals = await getGithubExecutives(currentNetwork);
-
-  // APP-244 TRACE
-  logger.info(
-    `[APP-244] getExecutiveProposal loaded ${proposals.length} proposals from github cache/fetch`
-  );
 
   const proposal = proposals.find(
     proposal =>
@@ -212,56 +204,36 @@ export async function getExecutiveProposal(
       proposal.address.toLowerCase() === proposalId.toLowerCase()
   );
 
-  // APP-244 TRACE
-  logger.info(
-    `[APP-244] getExecutiveProposal find result: ${proposal ? `found address=${proposal.address}` : 'NOT FOUND in github index'}`
-  );
-
   if (!proposal) {
-    // Fall back to rendering a minimal page when the id is a valid address
-    // that isn't in the github executive-votes index. Without this, deep links
-    // to older or unindexed spells return 404 (APP-244). We attempt to enrich
-    // with on-chain spell data via analyzeSpell, but render even if that fails
-    // — matches the /custom-spell/[address] behavior and avoids 404s when the
-    // RPC proxy is unreachable (e.g. from some preview environments).
+    // Fall back to on-chain spell data when the id is a valid address that
+    // isn't in the github executive-votes index. Without this, deep links to
+    // older or unindexed spells return 404 (APP-244). We only render when
+    // description() returns an executive hash, confirming the address is an
+    // actual DSS spell rather than an arbitrary EOA.
     if (isAddress(proposalId, { strict: false })) {
-      // APP-244 TRACE
-      logger.info(`[APP-244] entering on-chain fallback for ${proposalId}`);
-      let spellData: SpellData = {
-        hasBeenScheduled: false,
-        skySupport: '0'
-      };
       try {
-        spellData = await analyzeSpell(proposalId, currentNetwork);
-        // APP-244 TRACE
-        logger.info(
-          `[APP-244] analyzeSpell returned executiveHash=${spellData.executiveHash ?? 'undefined'}`
-        );
+        const spellData = await analyzeSpell(proposalId, currentNetwork);
+        if (spellData.executiveHash) {
+          return {
+            active: false,
+            address: proposalId,
+            key: proposalId.toLowerCase(),
+            proposalBlurb: '',
+            title: '',
+            date: '',
+            proposalLink: '',
+            spellData
+          };
+        }
       } catch (e) {
         logger.error(
-          `[APP-244] analyzeSpell threw for ${proposalId} on ${currentNetwork}, rendering page without on-chain data`,
+          `getExecutiveProposal: analyzeSpell threw for ${proposalId} on ${currentNetwork}`,
           e
         );
       }
-      // APP-244 TRACE
-      logger.info(`[APP-244] fallback returning Proposal with key=${proposalId.toLowerCase()}`);
-      return {
-        active: false,
-        address: proposalId,
-        key: proposalId.toLowerCase(),
-        proposalBlurb: '',
-        title: '',
-        date: '',
-        proposalLink: '',
-        spellData
-      };
     }
-    // APP-244 TRACE
-    logger.warn(`[APP-244] not a valid address — returning null for id=${proposalId}`);
     return null;
   }
-  // APP-244 TRACE
-  logger.info(`[APP-244] github match for ${proposalId}, fetching content + analyzeSpell`);
   invariant(proposal, `proposal not found for proposal id ${proposalId}`);
 
   const [spellText, spellData] = await Promise.all([
