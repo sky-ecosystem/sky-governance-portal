@@ -492,7 +492,21 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   // fetch proposal contents at build-time if on the default network
   const proposalId = (params || {})['proposal-id'] as string;
 
+  // APP-244 TRACE: remove after debugging
+  // eslint-disable-next-line no-console
+  console.log(`[APP-244] getStaticProps start id=${proposalId}`);
+
   const proposal: Proposal | null = await getExecutiveProposal(proposalId, DEFAULT_NETWORK.network);
+
+  // APP-244 TRACE
+  // eslint-disable-next-line no-console
+  console.log(
+    `[APP-244] getStaticProps result for id=${proposalId}: ${
+      proposal
+        ? `proposal.key=${proposal.key} title=${(proposal.title || '').slice(0, 40)}`
+        : 'proposal=null (will render 404)'
+    }`
+  );
 
   /**Disabling spell-effects until multi-transactions endpoint is ready */
   // // Only fetch at build time if spell has been cast, and it's not older than two months (to speed up builds)
