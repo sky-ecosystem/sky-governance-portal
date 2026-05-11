@@ -447,14 +447,14 @@ export default function ProposalPage({
   // fetch proposal contents at run-time if on any network other than the default
   useEffect(() => {
     if (!network) return;
-    if (!isDefaultNetwork(network) && query['proposal-id']) {
-      fetchJson(`/api/executive/${query['proposal-id']}?network=${network}`)
+    if (!isDefaultNetwork(network) && query.proposalId) {
+      fetchJson(`/api/executive/${query.proposalId}?network=${network}`)
         .then(response => {
           _setProposal(response);
         })
         .catch(setError);
     }
-  }, [query['proposal-id'], network]);
+  }, [query.proposalId, network]);
 
   // Check for fallback state first
   if (router.isFallback) {
@@ -490,7 +490,7 @@ export default function ProposalPage({
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   // fetch proposal contents at build-time if on the default network
-  const proposalId = (params || {})['proposal-id'] as string;
+  const proposalId = (params || {}).proposalId as string;
 
   // APP-244 TRACE: remove after debugging
   // eslint-disable-next-line no-console

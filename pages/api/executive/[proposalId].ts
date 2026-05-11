@@ -180,7 +180,7 @@ export default withApiHandler(
 
     // Validate proposal-id format (kebab-case string or ethereum address)
     const proposalId = validateQueryParam(
-      req.query['proposal-id'] as string,
+      req.query.proposalId as string,
       'string',
       { defaultValue: null },
       (id: string) => {
