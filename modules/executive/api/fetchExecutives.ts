@@ -211,18 +211,28 @@ export async function getExecutiveProposal(
     // description() returned an executive hash, which confirms the address is
     // an actual DSS spell rather than an arbitrary EOA.
     if (isAddress(proposalId, { strict: false })) {
-      const spellData = await analyzeSpell(proposalId, currentNetwork);
-      if (spellData.executiveHash) {
-        return {
-          active: false,
-          address: proposalId,
-          key: proposalId.toLowerCase(),
-          proposalBlurb: '',
-          title: '',
-          date: '',
-          proposalLink: '',
-          spellData
-        };
+      try {
+        const spellData = await analyzeSpell(proposalId, currentNetwork);
+        if (spellData.executiveHash) {
+          return {
+            active: false,
+            address: proposalId,
+            key: proposalId.toLowerCase(),
+            proposalBlurb: '',
+            title: '',
+            date: '',
+            proposalLink: '',
+            spellData
+          };
+        }
+        logger.warn(
+          `getExecutiveProposal: ${proposalId} not in github index and description() returned no executive hash on ${currentNetwork} — treating as not-a-spell`
+        );
+      } catch (e) {
+        logger.error(
+          `getExecutiveProposal: on-chain fallback failed for ${proposalId} on ${currentNetwork}`,
+          e
+        );
       }
     }
     return null;
