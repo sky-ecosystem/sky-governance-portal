@@ -134,7 +134,8 @@
       "serialize-javascript": "^7.0.5",
       "postcss@>=8 <9": "^8.5.10",
       "vite@>=6 <7": "^6.4.2",
-      "brace-expansion@>=1 <2": "^1.1.14"
+      "brace-expansion@>=1 <2": "^1.1.14",
+      "dompurify": "^3.4.0"
     }
   },
   "packageManager": "pnpm@10.17.0"
