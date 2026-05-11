@@ -19,6 +19,7 @@ import { getExecutiveProposalsCacheKey, githubExecutivesCacheKey } from 'modules
 import { ONE_HOUR_IN_MS } from 'modules/app/constants/time';
 import { trimProposalKey } from '../helpers/trimProposalKey';
 import { matterWrapper } from 'lib/matter';
+import { isAddress } from 'viem';
 
 export async function getGithubExecutives(network: SupportedNetworks): Promise<CMSProposal[]> {
   const cachedProposals = await cacheGet(githubExecutivesCacheKey, network);
@@ -202,7 +203,30 @@ export async function getExecutiveProposal(
       proposal.key === proposalId ||
       proposal.address.toLowerCase() === proposalId.toLowerCase()
   );
-  if (!proposal) return null;
+
+  if (!proposal) {
+    // Fall back to on-chain spell data when the id is a valid address that
+    // isn't in the github executive-votes index. Without this, deep links to
+    // older or unindexed spells return 404 (APP-244). We only render when
+    // description() returned an executive hash, which confirms the address is
+    // an actual DSS spell rather than an arbitrary EOA.
+    if (isAddress(proposalId, { strict: false })) {
+      const spellData = await analyzeSpell(proposalId, currentNetwork);
+      if (spellData.executiveHash) {
+        return {
+          active: false,
+          address: proposalId,
+          key: proposalId.toLowerCase(),
+          proposalBlurb: '',
+          title: '',
+          date: '',
+          proposalLink: '',
+          spellData
+        };
+      }
+    }
+    return null;
+  }
   invariant(proposal, `proposal not found for proposal id ${proposalId}`);
 
   const [spellText, spellData] = await Promise.all([
