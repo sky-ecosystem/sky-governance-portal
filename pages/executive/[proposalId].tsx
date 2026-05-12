@@ -447,14 +447,14 @@ export default function ProposalPage({
   // fetch proposal contents at run-time if on any network other than the default
   useEffect(() => {
     if (!network) return;
-    if (!isDefaultNetwork(network) && query['proposal-id']) {
-      fetchJson(`/api/executive/${query['proposal-id']}?network=${network}`)
+    if (!isDefaultNetwork(network) && query.proposalId) {
+      fetchJson(`/api/executive/${query.proposalId}?network=${network}`)
         .then(response => {
           _setProposal(response);
         })
         .catch(setError);
     }
-  }, [query['proposal-id'], network]);
+  }, [query.proposalId, network]);
 
   // Check for fallback state first
   if (router.isFallback) {
@@ -490,24 +490,18 @@ export default function ProposalPage({
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   // fetch proposal contents at build-time if on the default network
-  const proposalId = (params || {})['proposal-id'] as string;
+  const proposalId = (params || {}).proposalId as string;
 
   const proposal: Proposal | null = await getExecutiveProposal(proposalId, DEFAULT_NETWORK.network);
 
-  /**Disabling spell-effects until multi-transactions endpoint is ready */
-  // // Only fetch at build time if spell has been cast, and it's not older than two months (to speed up builds)
-  // const spellDiffs: SpellDiff[] =
-  //   proposal &&
-  //   proposal.spellData?.hasBeenCast &&
-  //   isAfter(new Date(proposal?.date), sub(new Date(), { months: 2 }))
-  //     ? await fetchHistoricalSpellDiff(proposal.address)
-  //     : [];
+  if (!proposal) {
+    return { notFound: true, revalidate: 60 * 60 };
+  }
 
   return {
     revalidate: 60 * 60, // Revalidate each hour
     props: {
       proposal,
-      // spellDiffs,
       revalidate: 30 // Ensures that after a spell is cast, we regenerate the static page with fetchHistoricalSpellDiff
     }
   };
