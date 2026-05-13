@@ -26,10 +26,11 @@ export const gqlRequest = async <TQuery = any>({
 }: GqlRequestProps): Promise<TQuery> => {
   try {
     const id = chainId ?? SupportedChainId.MAINNET;
-    const url = CHAIN_INFO[id].subgraphUrl;
-    if (!url) {
+    const baseUrl = CHAIN_INFO[id].subgraphUrl;
+    if (!baseUrl) {
       return Promise.reject(new ApiError(`Missing subgraph url in configuration for chainId: ${id}`));
     }
+    const url = `${baseUrl}/${id}`;
 
     const resp = await backoffRetry(
       1,
