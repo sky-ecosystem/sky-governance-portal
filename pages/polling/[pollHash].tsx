@@ -404,14 +404,14 @@ export default function PollPage({ poll: prefetchedPoll }: { poll?: Poll }): JSX
   // fetch poll contents at run-time if on any network other than the default
   useEffect(() => {
     if (!network) return;
-    if (query['poll-hash'] && !isDefaultNetwork(network)) {
-      fetchJson(`/api/polling/${query['poll-hash']}?network=${network}`)
+    if (query.pollHash && !isDefaultNetwork(network)) {
+      fetchJson(`/api/polling/${query.pollHash}?network=${network}`)
         .then(response => {
           _setPoll(response);
         })
         .catch(setError);
     }
-  }, [query['poll-hash'], network]);
+  }, [query.pollHash, network]);
 
   const poll = (isDefaultNetwork(network) ? prefetchedPoll : _poll) as Poll;
 
@@ -442,7 +442,7 @@ export default function PollPage({ poll: prefetchedPoll }: { poll?: Poll }): JSX
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   // fetch poll contents at build-time if on the default network
-  const pollIdOrSlug = params?.['poll-hash'] as string;
+  const pollIdOrSlug = params?.pollHash as string;
   // invariant(pollSlug, 'getStaticProps poll hash not found in params');
 
   const poll = await fetchSinglePoll(DEFAULT_NETWORK.network, pollIdOrSlug);

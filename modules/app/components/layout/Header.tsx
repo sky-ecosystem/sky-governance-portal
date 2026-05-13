@@ -18,11 +18,8 @@ import { ErrorBoundary } from '../ErrorBoundary';
 import { useAccount } from 'modules/app/hooks/useAccount';
 import { InternalLink } from 'modules/app/components/InternalLink';
 import { Menu, MenuButton, MenuItem, MenuList } from '@reach/menu-button';
-import { useGasPrice } from 'modules/web3/hooks/useGasPrice';
 import { ExternalLink } from '../ExternalLink';
-import { GASNOW_URL, SupportedNetworks } from 'modules/web3/constants/networks';
 import { ClientRenderOnly } from '../ClientRenderOnly';
-import { useNetwork } from 'modules/app/hooks/useNetwork';
 
 const MenuItemContent = ({ label, icon }: { label: React.ReactNode; icon: string }) => {
   return (
@@ -117,8 +114,6 @@ const Header = (): JSX.Element => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const bpi = useBreakpointIndex();
   const { account } = useAccount();
-  const network = useNetwork();
-  const { data: gas } = useGasPrice({ network });
   const [mode, setMode] = useColorMode();
   const [renderedMode, setRenderedMode] = useState('light');
 
@@ -207,28 +202,6 @@ const Header = (): JSX.Element => {
         </Flex>
       </Flex>
       <Flex sx={{ alignItems: 'center' }}>
-        {bpi > 1 && account && network === SupportedNetworks.MAINNET && gas !== undefined && (
-          <ExternalLink
-            title="Ethereum Gas Price"
-            href={GASNOW_URL}
-            styles={{
-              variant: 'links.nostyle'
-            }}
-          >
-            <Flex
-              sx={{
-                alignItems: 'center',
-                gap: 1,
-                justifyContent: 'flex-start',
-                cursor: 'pointer',
-                px: [0, 0, 2, 3]
-              }}
-            >
-              <Text variant="smallText">{gas}</Text>
-              <Icon name="gas" size={3} />
-            </Flex>
-          </ExternalLink>
-        )}
         {bpi > 3 && account && router.pathname.includes('polling') && <BallotStatus mr={3} />}
         {!isProduction && bpi > 1 && (
           <Flex mr={3}>
@@ -254,10 +227,8 @@ const Header = (): JSX.Element => {
           <MobileMenu
             hide={() => setShowMobileMenu(false)}
             router={router}
-            gas={gas}
             onToggleTheme={onToggleTheme}
             mode={mode}
-            network={network}
           />
         )}
         {bpi > 0 && (
@@ -270,7 +241,7 @@ const Header = (): JSX.Element => {
   );
 };
 
-const MobileMenu = ({ hide, router, gas, onToggleTheme, mode, network }) => {
+const MobileMenu = ({ hide, router, onToggleTheme, mode }) => {
   const isProduction =
     process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'development';
 
@@ -353,27 +324,6 @@ const MobileMenu = ({ hide, router, gas, onToggleTheme, mode, network }) => {
             <InternalLink href="/account" title="View account">
               <MenuItemContent icon="person" label="Account" />
             </InternalLink>
-            {network === SupportedNetworks.MAINNET && (
-              <ExternalLink
-                title="Ethereum Gas Price"
-                href={GASNOW_URL}
-                styles={{
-                  variant: 'links.nostyle'
-                }}
-              >
-                <MenuItemContent
-                  icon="gas"
-                  label={
-                    <Text>
-                      <Text as="span" sx={{ color: 'primary' }}>
-                        {gas}
-                      </Text>{' '}
-                      Gwei
-                    </Text>
-                  }
-                />
-              </ExternalLink>
-            )}
             <Flex onClick={hide}>
               <ExternalLink
                 styles={{ variant: 'links.nostyle' }}

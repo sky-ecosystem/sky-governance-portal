@@ -20,14 +20,35 @@ let isConnected = true;
 
 const redis = config.REDIS_URL
   ? new Redis(config.REDIS_URL, {
-      connectTimeout: 10000
+      connectTimeout: 10000,
+      // Serverless fail-fast tuning. Defaults retry each command up to 20
+      // times before surfacing the error, which under a degraded Upstash
+      // connection meant every cache read paid the full retry budget and
+      // logged "Reached the max retries per request limit (which is 20)".
+      // The cache layer treats Redis as best-effort (try/catch + null on
+      // failure), so per-request errors degrade cleanly to "no cache".
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      enableReadyCheck: false,
+      retryStrategy: times => {
+        // Cap reconnect attempts so a dead connection doesn't keep the
+        // lambda alive; the next invocation will open a fresh socket.
+        if (times > 5) return null;
+        return Math.min(times * 200, 1000);
+      }
     })
   : null;
 
 if (redis) {
   redis.on('error', error => {
-    logger.error(error.message);
-    // TODO: Handle error and find better ways to manage reconnects and redis connection status (TODO: Read ioRedis docs)
+    logger.error(`Redis error: ${error.message}`);
+  });
+  // Track connection lifecycle so isConnected reflects current state instead
+  // of latching to false on the first transient error.
+  redis.on('ready', () => {
+    isConnected = true;
+  });
+  redis.on('end', () => {
     isConnected = false;
   });
 }
