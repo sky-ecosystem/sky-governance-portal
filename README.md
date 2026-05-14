@@ -94,14 +94,13 @@ The following configuration values can be added to the `.env` file:
 
 Required for e2e:
 
-- Set `NEXT_PUBLIC_TENDERLY_RPC_KEY` to the API key required to query the forked Tenderly network RPC
 - Set `TENDERLY_API_KEY` to be able to run e2e tests against forked network
 
 ### Tests
 
 The Governance portal includes two test suites: Vitest and E2E
 
-To run e2e, `TENDERLY_API_KEY` and `NEXT_PUBLIC_TENDERLY_RPC_KEY` must be correcly configured.
+To run e2e, `TENDERLY_API_KEY` must be correcly configured.
 
 Install playwright
 `pnpm playwright install`

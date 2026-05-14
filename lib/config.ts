@@ -22,7 +22,6 @@ type SystemConfig = {
   DASHBOARD_PASSWORD: string;
   GASLESS_BACKDOOR_SECRET: string;
   GASLESS_DISABLED: string;
-  TENDERLY_RPC_KEY: string;
   USE_MOCK_WALLET: string;
   SUBGRAPH_API_KEY: string;
   PROXY_ORIGIN: string;
@@ -45,7 +44,6 @@ export const config: SystemConfig = {
   DASHBOARD_PASSWORD: process.env.DASHBOARD_PASSWORD || '',
   GASLESS_BACKDOOR_SECRET: process.env.GASLESS_BACKDOOR_SECRET || '',
   GASLESS_DISABLED: process.env.GASLESS_DISABLED || '',
-  TENDERLY_RPC_KEY: process.env.NEXT_PUBLIC_TENDERLY_RPC_KEY || '',
   USE_MOCK_WALLET: process.env.NEXT_PUBLIC_USE_MOCK_WALLET || '',
   SUBGRAPH_API_KEY: process.env.NEXT_PUBLIC_SUBGRAPH_API_KEY || '',
   PROXY_ORIGIN: process.env.NEXT_PUBLIC_PROXY_ORIGIN || ''
