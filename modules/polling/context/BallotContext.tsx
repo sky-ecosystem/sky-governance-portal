@@ -408,16 +408,20 @@ export const BallotProvider = ({ children }: PropTypes): React.ReactElement => {
         const voteTxCreator = () => getGaslessTransaction(gaslessPublicClient, gaslessTx.hash);
         trackPollVote(voteTxCreator, getGaslessNetwork(network));
 
-        if (gaslessTx.status !== 'mined') {
+        if (gaslessTx.status !== 'confirmed' && gaslessTx.status !== 'finalized') {
           const url = `/api/polling/relayer-tx?network=${network}&txId=${gaslessTx.transactionId}`;
           backoffRetry(
             10,
             () =>
               fetchJson(url).then(tx => {
-                // gaslessTx.status can be: 'pending' | 'sent' | 'submitted' | 'inmempool' | 'mined' | 'confirmed' | 'failed'
-                if (tx.status === 'failed') {
+                // Privy tx states: 'broadcasted' | 'pending' | 'confirmed' | 'finalized'
+                //   | 'failed' | 'execution_reverted' | 'provider_error' | 'replaced'
+                if (
+                  tx.status === 'failed' ||
+                  tx.status === 'execution_reverted' ||
+                  tx.status === 'provider_error'
+                ) {
                   logger.error('Gasless vote failed', tx);
-                  // check if failed
                   setStep('tx-error');
                 } else if (isBefore(new Date(gaslessTx.sentAt), sub(new Date(), { seconds: 30 }))) {
                   // if 30 seconds passed, let user know it might be stuck in queue

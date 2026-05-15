@@ -8,10 +8,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { SupportedNetworks } from 'modules/web3/constants/networks';
 import { formatEther } from 'viem';
-import { getArbitrumRelaySigner } from './getArbitrumRelaySigner';
 import logger from 'lib/logger';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 import { networkNameToChainId } from 'modules/web3/helpers/chain';
+import { privyGetWalletAddress } from 'lib/privyRest';
+import { getPrivyWalletConfig } from '../helpers/relayerCredentials';
 
 export const getRelayerBalance = async (network: SupportedNetworks): Promise<string> => {
   try {
@@ -19,13 +20,11 @@ export const getRelayerBalance = async (network: SupportedNetworks): Promise<str
       throw new Error(`Unsupported network: ${network}`);
     }
 
-    const relayer = getArbitrumRelaySigner(network);
     const gaslessPublicClient = getGaslessPublicClient(networkNameToChainId(network));
+    const { walletId } = getPrivyWalletConfig(network);
+    const address = await privyGetWalletAddress(walletId);
 
-    const relayerInstance = await relayer.getRelayer();
-    const address = relayerInstance.address;
-    const balance = await gaslessPublicClient.getBalance({ address: address as `0x${string}` });
-
+    const balance = await gaslessPublicClient.getBalance({ address });
     return formatEther(balance);
   } catch (err) {
     logger.error(err);

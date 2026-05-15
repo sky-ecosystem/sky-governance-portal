@@ -5,12 +5,13 @@ import { coinbaseWallet, metaMask, safe, walletConnect } from 'wagmi/connectors'
 import { createPublicClient } from 'viem';
 import { createProxyTransport } from './proxyTransport';
 
-const RPC_TENDERLY = `https://virtual.mainnet.rpc.tenderly.co/${process.env.NEXT_PUBLIC_TENDERLY_RPC_KEY}`;
+export const RPC_TENDERLY =
+  'https://virtual.rpc.tenderly.co/jetstreamgg/jetstream/public/jetstream-testnet';
 const RPC_ARBITRUM_TESTNET = process.env.NEXT_PUBLIC_RPC_ARBITRUM_TESTNET || '';
 
 export const tenderly = {
   id: SupportedChainId.TENDERLY as const,
-  name: 'mainnet_2025_apr_15_0',
+  name: 'Tenderly',
   network: 'tenderly',
   iconUrl: 'tokens/weth.svg',
   nativeCurrency: {

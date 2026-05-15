@@ -9,7 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { SupportedChain } from '../types/chain';
 import { SupportedChainId } from './chainID';
 
-import { STAGING_SUBGRAPH_URL, PROD_SUBGRAPH_URL } from 'modules/gql/gql.constants';
+import { INDEXER_URL } from 'modules/gql/gql.constants';
 
 export enum SupportedConnectors {
   METAMASK = 'MetaMask',
@@ -35,7 +35,6 @@ const TENDERLY_CONTAINER_ID = 'da404f7a-d40d-4c75-928f-308835f9e0e3';
 
 // Constants for API URLs
 export const URL_BA_LABS_API_MAINNET = 'https://info-sky.blockanalitica.com/api/v1';
-export const URL_BA_LABS_API_TENDERLY = 'https://sky-tenderly.blockanalitica.com/api/v1';
 
 //todo: change name to SUPPORTED_CHAIN_INFO
 export const CHAIN_INFO: ChainInfo = {
@@ -46,7 +45,7 @@ export const CHAIN_INFO: ChainInfo = {
     label: 'Mainnet',
     type: 'normal',
     network: SupportedNetworks.MAINNET,
-    subgraphUrl: PROD_SUBGRAPH_URL,
+    subgraphUrl: INDEXER_URL,
     showInProduction: true
   },
   [SupportedChainId.ARBITRUMTESTNET]: {
@@ -56,7 +55,7 @@ export const CHAIN_INFO: ChainInfo = {
     label: 'ArbitrumTestnet',
     type: 'gasless',
     network: SupportedNetworks.ARBITRUMTESTNET,
-    subgraphUrl: STAGING_SUBGRAPH_URL,
+    subgraphUrl: INDEXER_URL,
     showInProduction: false
   },
   [SupportedChainId.ARBITRUM]: {
@@ -66,7 +65,7 @@ export const CHAIN_INFO: ChainInfo = {
     label: 'Arbitrum',
     type: 'gasless',
     network: SupportedNetworks.ARBITRUM,
-    subgraphUrl: PROD_SUBGRAPH_URL,
+    subgraphUrl: INDEXER_URL,
     showInProduction: false
   },
   [SupportedChainId.TENDERLY]: {
@@ -76,7 +75,7 @@ export const CHAIN_INFO: ChainInfo = {
     label: 'Tenderly',
     type: 'normal',
     network: SupportedNetworks.TENDERLY,
-    subgraphUrl: STAGING_SUBGRAPH_URL,
+    subgraphUrl: INDEXER_URL,
     showInProduction: false
   }
 };

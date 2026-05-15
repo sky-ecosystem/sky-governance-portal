@@ -9,7 +9,6 @@ import { createMocks, RequestMethod } from 'node-mocks-http';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import voteAPIHandler, { API_VOTE_ERRORS } from '../vote';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
-import { getArbitrumPollingContractRelayProvider } from 'modules/polling/api/getArbitrumPollingContractRelayProvider';
 import { getSKYVotingWeight } from 'modules/sky/helpers/getSKYVotingWeight';
 import { cacheSet, cacheDel } from 'modules/cache/cache';
 import { getActivePollIds } from 'modules/polling/api/fetchPolls';
@@ -23,7 +22,6 @@ import { Mock, vi } from 'vitest';
 import { getGaslessPublicClient } from 'modules/web3/helpers/getPublicClient';
 
 vi.mock('modules/web3/helpers/getPublicClient');
-vi.mock('modules/polling/api/getArbitrumPollingContractRelayProvider');
 vi.mock('modules/sky/helpers/getSKYVotingWeight');
 vi.mock('modules/cache/cache');
 vi.mock('modules/polling/api/fetchPolls');
@@ -41,10 +39,6 @@ describe('/api/polling/vote API Endpoint', () => {
   beforeAll(() => {
     (getGaslessPublicClient as Mock).mockReturnValue({
       readContract: publicClientMockResponses
-    });
-    (getArbitrumPollingContractRelayProvider as Mock).mockReturnValue({
-      vote: () => Promise.resolve(null),
-      'vote(address,uint256,uint256,uint256[],uint256[],uint8,bytes32,bytes32)': () => Promise.resolve(null)
     });
     (cacheSet as Mock).mockImplementation(() => null);
     (cacheDel as Mock).mockImplementation(() => null);

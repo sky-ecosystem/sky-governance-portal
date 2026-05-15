@@ -15,7 +15,7 @@ import { createWalletClient, http } from 'viem';
 import { ONE_HOUR_IN_MS } from 'modules/app/constants/time';
 import { privateKeyToAccount } from 'viem/accounts';
 import { SupportedNetworks } from 'modules/web3/constants/networks';
-import { tenderly } from 'modules/wagmi/config/config.default';
+import { RPC_TENDERLY, tenderly } from 'modules/wagmi/config/config.default';
 import { createProxyTransport } from 'modules/wagmi/config/proxyTransport';
 import { mainnet } from 'viem/chains';
 
@@ -37,9 +37,7 @@ export default withApiHandler(async (req: NextApiRequest, res: NextApiResponse) 
   const client = createWalletClient({
     account,
     chain,
-    transport: isTestnet
-      ? http(`https://virtual.mainnet.rpc.tenderly.co/${process.env.NEXT_PUBLIC_TENDERLY_RPC_KEY}`)
-      : createProxyTransport(mainnet.id)
+    transport: isTestnet ? http(RPC_TENDERLY) : createProxyTransport(mainnet.id)
   });
 
   const voter = account.address;
