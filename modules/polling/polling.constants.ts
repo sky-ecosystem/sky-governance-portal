@@ -13,9 +13,7 @@ import { SupportedNetworks } from 'modules/web3/constants/networks';
 
 export const ABSTAIN = 0;
 
-// TEMP — lowered from 2400 to 1 SKY for end-to-end testing on the privy-poc branch.
-// REVERT to parseEther('2400') before merging this branch.
-export const MIN_SKY_REQUIRED_FOR_GASLESS_VOTING = parseEther('1');
+export const MIN_SKY_REQUIRED_FOR_GASLESS_VOTING = parseEther('2400');
 export const MIN_SKY_REQUIRED_FOR_GASLESS_VOTING_DISPLAY = parseFloat(
   formatEther(MIN_SKY_REQUIRED_FOR_GASLESS_VOTING)
 ).toLocaleString();
