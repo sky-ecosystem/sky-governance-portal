@@ -251,7 +251,7 @@ export const chiefAbi = [
  */
 export const chiefAddress = {
   1: '0x929d9A1435662357F54AdcF64DcEE4d6b867a6f9',
-  314310: '0x81a5186946ce055a5ceeC93cd97C7e7EDe7Da922',
+  314310: '0x929d9A1435662357F54AdcF64DcEE4d6b867a6f9',
 } as const;
 
 /**
@@ -852,7 +852,7 @@ export const mkrAbi = [
  */
 export const mkrAddress = {
   1: '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2',
-  314310: '0x56072C95FAA701256059aa122697B133aDEd9279',
+  314310: '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2',
 } as const;
 
 /**
@@ -2764,7 +2764,7 @@ export const voteDelegateFactoryAbi = [
  */
 export const voteDelegateFactoryAddress = {
   1: '0x4Cf3DaeFA2683Cd18df00f7AFF5169C00a9EccD5',
-  314310: '0x98F74b7C96497070ba5052E02832EF9892962e62',
+  314310: '0x4Cf3DaeFA2683Cd18df00f7AFF5169C00a9EccD5',
 } as const;
 
 /**

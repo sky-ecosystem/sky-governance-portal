@@ -12,7 +12,7 @@ export const contracts: { name: string; address: Record<ChainId, `0x${string}`> 
     name: 'chief',
     address: {
       [mainnet.id]: '0x929d9A1435662357F54AdcF64DcEE4d6b867a6f9',
-      [TENDERLY_CHAIN_ID]: '0x81a5186946ce055a5ceeC93cd97C7e7EDe7Da922'
+      [TENDERLY_CHAIN_ID]: '0x929d9A1435662357F54AdcF64DcEE4d6b867a6f9'
     }
   },
   {
@@ -27,7 +27,7 @@ export const contracts: { name: string; address: Record<ChainId, `0x${string}`> 
     name: 'mkr',
     address: {
       [mainnet.id]: '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2',
-      [TENDERLY_CHAIN_ID]: '0x56072C95FAA701256059aa122697B133aDEd9279' //SKY address
+      [TENDERLY_CHAIN_ID]: '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2'
     }
   },
   {
@@ -69,7 +69,7 @@ export const contracts: { name: string; address: Record<ChainId, `0x${string}`> 
     name: 'voteDelegateFactory',
     address: {
       [mainnet.id]: '0x4Cf3DaeFA2683Cd18df00f7AFF5169C00a9EccD5',
-      [TENDERLY_CHAIN_ID]: '0x98F74b7C96497070ba5052E02832EF9892962e62'
+      [TENDERLY_CHAIN_ID]: '0x4Cf3DaeFA2683Cd18df00f7AFF5169C00a9EccD5'
     }
   },
   {
