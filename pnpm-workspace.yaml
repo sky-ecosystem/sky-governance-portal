@@ -1,0 +1,42 @@
+minimumReleaseAge: 10080
+scriptShell: bash
+
+overrides:
+  elliptic: ^6.6.1
+  axios@<1: ^0.31.1
+  axios@^1: ^1.15.2
+  protobufjs@^6: 7.5.5
+  protobufjs@^7: 7.5.5
+  unstorage@>=1 <2: ^1.17.5
+  bn.js@<5: ^4.12.3
+  immutable@<4: ^3.8.3
+  yaml@<2: ^1.10.3
+  js-yaml@<4: ^3.14.2
+  js-yaml@>=4: ^4.1.1
+  validator: ^13.15.22
+  prismjs: ^1.30.0
+  ws@>=7 <8: ^7.5.10
+  "@metamask/sdk": ^0.33.1
+  "@metamask/sdk-communication-layer": ^0.33.1
+  serialize-javascript: ^7.0.5
+  postcss@>=8 <9: ^8.5.10
+  vite@>=6 <7: ^6.4.2
+  brace-expansion@>=1 <2: ^1.1.14
+  dompurify: ^3.4.0
+  rollup@>=4 <5: ^4.59.0
+  webpack@>=5 <6: ^5.104.1
+  diff@>=5 <6: ^5.2.2
+  esbuild@<0.25.0: ^0.25.0
+
+allowBuilds:
+  '@scarf/scarf': false
+  '@tree-sitter-grammars/tree-sitter-yaml': false
+  bufferutil: false
+  core-js-pure: false
+  esbuild: false
+  keccak: false
+  protobufjs: false
+  sharp: false
+  tree-sitter: false
+  tree-sitter-json: false
+  utf-8-validate: false
