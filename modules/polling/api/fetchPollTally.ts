@@ -16,7 +16,7 @@ import { extractWinnerInstantRunoff } from './victory_conditions/instantRunoff';
 import { extractWinnerDefault } from './victory_conditions/default';
 import { InstantRunoffResults } from '../types/instantRunoff';
 import { extractSatisfiesComparison } from './victory_conditions/comparison';
-import { hasVictoryConditionInstantRunOff } from '../helpers/utils';
+import { hasVictoryConditionInstantRunOff, isInputFormatSingleChoice } from '../helpers/utils';
 import { fetchVotesByAddressForPoll } from './fetchVotesByAddress';
 import { calculatePercentage } from 'lib/utils';
 import { formatEther, parseEther } from 'viem';
@@ -73,7 +73,18 @@ export async function fetchPollTally(poll: Poll, network: SupportedNetworks): Pr
   });
 
   // Fetch votes for the poll
-  const votesByAddress = await fetchVotesByAddressForPoll(poll.pollId, ownerToDelegateMap, network);
+  const rawVotesByAddress = await fetchVotesByAddressForPoll(poll.pollId, ownerToDelegateMap, network);
+
+  // Cardinality guard: a single-choice poll must carry exactly one option per ballot.
+  // Ballots that decode to a different number of options are malformed for this format
+  // and are discarded rather than counted, so a voter cannot split or multiply their
+  // weight across options. Together with the deduplication in parseRawOptionId this
+  // closes the vote-amplification vector (Immunefi #82775). Other formats (ranked-choice,
+  // approval) legitimately carry multiple distinct options and are left untouched.
+  // isInputFormatSingleChoice also handles the legacy string-shaped inputFormat.
+  const votesByAddress = isInputFormatSingleChoice(poll.parameters)
+    ? rawVotesByAddress.filter(vote => vote.ballot.length === 1)
+    : rawVotesByAddress;
 
   // Abstain
   const abstain = poll.parameters.inputFormat.abstain ? poll.parameters.inputFormat.abstain : [0];

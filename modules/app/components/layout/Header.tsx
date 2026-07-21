@@ -132,7 +132,7 @@ const Header = (): JSX.Element => {
     <Box
       as="header"
       pt={3}
-      pb={2}
+      pb={3}
       px={3}
       sx={{
         display: 'flex',
