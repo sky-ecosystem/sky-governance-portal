@@ -12,7 +12,6 @@ import { mockRpcCalls } from './mock-rpc-call';
 dotenv.config();
 
 const displayName = process.env.CI ? 'ci-tests-testnet' : 'local-tests-testnet';
-const MAINNET_FORK_VNET_ID = 'bf27af19-1335-404a-9257-18affa774f5a';
 const RPC_READY_RETRIES = 5;
 
 const sendTenderlyRpc = async (rpcUrl: string, body: Record<string, unknown>) => {
@@ -93,6 +92,11 @@ const forkVnet = async (displayName: string) => {
   if (!displayName.length) {
     throw new Error('A display name is required for the virtual testnet');
   }
+  const sourceVnetId = process.env.TENDERLY_MAINNET_FORK_VNET_ID;
+  if (!sourceVnetId) {
+    throw new Error('TENDERLY_MAINNET_FORK_VNET_ID is required to fork the Tenderly virtual testnet');
+  }
+
   const res = await fetch('https://api.tenderly.co/api/v1/account/jetstreamgg/project/jetstream/vnets/fork', {
     headers: [
       ['accept', 'application/json, text/plain, */*'],
@@ -101,7 +105,7 @@ const forkVnet = async (displayName: string) => {
     ],
     method: 'POST',
     body: JSON.stringify({
-      vnet_id: MAINNET_FORK_VNET_ID,
+      vnet_id: sourceVnetId,
       display_name: displayName
     })
   });

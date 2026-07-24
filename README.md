@@ -95,12 +95,13 @@ The following configuration values can be added to the `.env` file:
 Required for e2e:
 
 - Set `TENDERLY_API_KEY` to be able to run e2e tests against forked network
+- Set `TENDERLY_MAINNET_FORK_VNET_ID` to the ID of the Tenderly VNet used as the fork source
 
 ### Tests
 
 The Governance portal includes two test suites: Vitest and E2E
 
-To run e2e, `TENDERLY_API_KEY` must be correcly configured.
+To run e2e, `TENDERLY_API_KEY` and `TENDERLY_MAINNET_FORK_VNET_ID` must be correctly configured.
 
 Install playwright
 `pnpm playwright install`
