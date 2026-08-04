@@ -66,10 +66,12 @@ describe('Fetch tally majority', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: '1' },
-            { voter: { id: '0x456' }, choice: '2' },
-            { voter: { id: '0x789' }, choice: '3' }
+            { voter: { id: '0x123' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x456' }, choice: '2', blockTime: 100 },
+            { voter: { id: '0x789' }, choice: '3', blockTime: 100 }
           ]
         }
       })
@@ -146,10 +148,12 @@ describe('Fetch tally majority', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: '1' },
-            { voter: { id: '0x456' }, choice: '2' },
-            { voter: { id: '0x789' }, choice: '3' }
+            { voter: { id: '0x123' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x456' }, choice: '2', blockTime: 100 },
+            { voter: { id: '0x789' }, choice: '3', blockTime: 100 }
           ]
         }
       })

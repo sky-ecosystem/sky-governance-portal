@@ -86,24 +86,33 @@ export async function fetchVotesByAddressForPoll(
   ]);
 
   const arbitrumPoll = arbitrumVotersResponse.arbitrumPoll;
-  const startUnix = arbitrumPoll?.startDate ?? Number.NEGATIVE_INFINITY;
-  const endUnix = arbitrumPoll?.endDate ?? Number.POSITIVE_INFINITY;
+  // Envio returns numeric fields as strings; coerce so the window comparisons stay numeric.
+  const startUnix =
+    arbitrumPoll?.startDate != null ? Number(arbitrumPoll.startDate) : Number.NEGATIVE_INFINITY;
+  const endUnix = arbitrumPoll?.endDate != null ? Number(arbitrumPoll.endDate) : Number.POSITIVE_INFINITY;
 
   const mainnetVotes = mainnetVotersResponse.pollVotes || [];
   const arbitrumVotes = arbitrumPoll?.votes || [];
 
-  const isVoteWithinPollTimeframe = vote => vote.blockTime >= startUnix && vote.blockTime <= endUnix;
+  const isVoteWithinPollTimeframe = vote => {
+    const blockTime = Number(vote.blockTime);
+    return blockTime >= startUnix && blockTime <= endUnix;
+  };
   const getVoterAddress = (voter: VoterData | VoterWithWeight) =>
     voter.address || stripChainIdPrefix(voter.id);
   const mapToDelegateAddress = (voterAddress: string) => delegateOwnerToAddress[voterAddress] || voterAddress;
 
+  // Neither polling contract enforces the poll window on-chain, so the indexer returns votes cast
+  // outside it. Drop them before the dedupe below, which keeps the latest blockTime per voter and
+  // would otherwise let a post-close ballot replace a legitimate one.
+  const mainnetVotesInPollTimeframe = mainnetVotes.filter(isVoteWithinPollTimeframe);
+  const arbitrumVotesInPollTimeframe = arbitrumVotes.filter(isVoteWithinPollTimeframe);
+
   // Normalize voters to the delegate contract address used for dedupe and weight lookup.
-  const mainnetVoterAddresses = mainnetVotes
-    .filter(isVoteWithinPollTimeframe)
-    .map(vote => getVoterAddress(vote.voter));
-  const arbitrumVoterAddresses = arbitrumVotes
-    .filter(isVoteWithinPollTimeframe)
-    .map(vote => mapToDelegateAddress(getVoterAddress(vote.voter)));
+  const mainnetVoterAddresses = mainnetVotesInPollTimeframe.map(vote => getVoterAddress(vote.voter));
+  const arbitrumVoterAddresses = arbitrumVotesInPollTimeframe.map(vote =>
+    mapToDelegateAddress(getVoterAddress(vote.voter))
+  );
 
   const allVoterAddresses = [...mainnetVoterAddresses, ...arbitrumVoterAddresses];
 
@@ -113,11 +122,11 @@ export async function fetchVotesByAddressForPoll(
     voter: { ...vote.voter, id: voterAddress, address: voterAddress }
   });
 
-  const mainnetVotesWithChainId = mainnetVotes.map(vote =>
+  const mainnetVotesWithChainId = mainnetVotesInPollTimeframe.map(vote =>
     normalizeVoteVoterAddress(vote, mainnetChainId)
   );
 
-  const arbitrumVotesTaggedWithChainId = arbitrumVotes.map(vote => {
+  const arbitrumVotesTaggedWithChainId = arbitrumVotesInPollTimeframe.map(vote => {
     const mappedAddress = mapToDelegateAddress(getVoterAddress(vote.voter));
     return normalizeVoteVoterAddress(vote, arbitrumChainId, mappedAddress);
   });
