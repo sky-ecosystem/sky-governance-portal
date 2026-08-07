@@ -48,12 +48,14 @@ describe('Fetch tally approval', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: '258' },
-            { voter: { id: '0x456' }, choice: '258' },
-            { voter: { id: '0x789' }, choice: '1' },
-            { voter: { id: '0xabc' }, choice: '4' },
-            { voter: { id: '0xdef' }, choice: '4' }
+            { voter: { id: '0x123' }, choice: '258', blockTime: 100 },
+            { voter: { id: '0x456' }, choice: '258', blockTime: 100 },
+            { voter: { id: '0x789' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: '4', blockTime: 100 },
+            { voter: { id: '0xdef' }, choice: '4', blockTime: 100 }
           ]
         }
       })
@@ -142,11 +144,13 @@ describe('Fetch tally approval', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: '258' },
-            { voter: { id: '0x456' }, choice: '258' },
-            { voter: { id: '0x789' }, choice: '4' },
-            { voter: { id: '0xabc' }, choice: '4' }
+            { voter: { id: '0x123' }, choice: '258', blockTime: 100 },
+            { voter: { id: '0x456' }, choice: '258', blockTime: 100 },
+            { voter: { id: '0x789' }, choice: '4', blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: '4', blockTime: 100 }
           ]
         }
       })
@@ -234,7 +238,9 @@ describe('Fetch tally approval', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
-          votes: [{ voter: { id: '0x123' }, choice: '0' }]
+          startDate: 50,
+          endDate: 200,
+          votes: [{ voter: { id: '0x123' }, choice: '0', blockTime: 100 }]
         }
       })
       .mockResolvedValueOnce({

@@ -48,12 +48,14 @@ describe('Fetch tally plurality', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: '1' },
-            { voter: { id: '0x456' }, choice: '1' },
-            { voter: { id: '0x789' }, choice: '0' },
-            { voter: { id: '0xabc' }, choice: '0' },
-            { voter: { id: '0x1aa' }, choice: '1' }
+            { voter: { id: '0x123' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x456' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x789' }, choice: '0', blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: '0', blockTime: 100 },
+            { voter: { id: '0x1aa' }, choice: '1', blockTime: 100 }
           ]
         }
       })
@@ -142,14 +144,16 @@ describe('Fetch tally plurality', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: '1' },
-            { voter: { id: '0x456' }, choice: '1' },
-            { voter: { id: '0x789' }, choice: '0' },
-            { voter: { id: '0xabc' }, choice: '0' },
-            { voter: { id: '0x1aa' }, choice: '1' },
-            { voter: { id: '0x2bb' }, choice: '2' },
-            { voter: { id: '0x3cc' }, choice: '2' }
+            { voter: { id: '0x123' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x456' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x789' }, choice: '0', blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: '0', blockTime: 100 },
+            { voter: { id: '0x1aa' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x2bb' }, choice: '2', blockTime: 100 },
+            { voter: { id: '0x3cc' }, choice: '2', blockTime: 100 }
           ]
         }
       })
@@ -240,6 +244,8 @@ describe('Fetch tally plurality', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: []
         }
       })
@@ -322,14 +328,16 @@ describe('Fetch tally plurality', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: '1' },
-            { voter: { id: '0x456' }, choice: '1' },
-            { voter: { id: '0x789' }, choice: '0' },
-            { voter: { id: '0xabc' }, choice: '0' },
-            { voter: { id: '0x1aa' }, choice: '1' },
-            { voter: { id: '0x2bb' }, choice: '2' },
-            { voter: { id: '0x3cc' }, choice: '0' }
+            { voter: { id: '0x123' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x456' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x789' }, choice: '0', blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: '0', blockTime: 100 },
+            { voter: { id: '0x1aa' }, choice: '1', blockTime: 100 },
+            { voter: { id: '0x2bb' }, choice: '2', blockTime: 100 },
+            { voter: { id: '0x3cc' }, choice: '0', blockTime: 100 }
           ]
         }
       })
