@@ -74,10 +74,12 @@ describe('Fetch tally ranked', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()) }, // [1st choice, 2nd choice, ...]
-            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()) },
-            { voter: { id: '0x789' }, choice: fromBuffer([2, 3].reverse()) }
+            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()), blockTime: 100 }, // [1st choice, 2nd choice, ...]
+            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()), blockTime: 100 },
+            { voter: { id: '0x789' }, choice: fromBuffer([2, 3].reverse()), blockTime: 100 }
           ]
         }
       })
@@ -163,10 +165,12 @@ describe('Fetch tally ranked', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()) }, // [1st choice, 2nd choice, ...]
-            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()) },
-            { voter: { id: '0x789' }, choice: fromBuffer([2, 3].reverse()) }
+            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()), blockTime: 100 }, // [1st choice, 2nd choice, ...]
+            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()), blockTime: 100 },
+            { voter: { id: '0x789' }, choice: fromBuffer([2, 3].reverse()), blockTime: 100 }
           ]
         }
       })
@@ -255,11 +259,13 @@ describe('Fetch tally ranked', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()) }, // [1st choice, 2nd choice, ...]
-            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()) },
-            { voter: { id: '0x789' }, choice: fromBuffer([2, 3].reverse()) },
-            { voter: { id: '0xabc' }, choice: fromBuffer([4, 1].reverse()) }
+            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()), blockTime: 100 }, // [1st choice, 2nd choice, ...]
+            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()), blockTime: 100 },
+            { voter: { id: '0x789' }, choice: fromBuffer([2, 3].reverse()), blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: fromBuffer([4, 1].reverse()), blockTime: 100 }
           ]
         }
       })
@@ -348,12 +354,14 @@ describe('Fetch tally ranked', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()) },
-            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()) },
+            { voter: { id: '0x123' }, choice: fromBuffer([1, 3].reverse()), blockTime: 100 },
+            { voter: { id: '0x456' }, choice: fromBuffer([3, 1].reverse()), blockTime: 100 },
             // option 4 should never get these votes since it's eliminated in the first round
-            { voter: { id: '0x789' }, choice: fromBuffer([2, 4].reverse()) },
-            { voter: { id: '0xabc' }, choice: fromBuffer([4, 1].reverse()) }
+            { voter: { id: '0x789' }, choice: fromBuffer([2, 4].reverse()), blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: fromBuffer([4, 1].reverse()), blockTime: 100 }
           ]
         }
       })
@@ -452,11 +460,13 @@ describe('Fetch tally ranked', () => {
       })
       .mockResolvedValueOnce({
         arbitrumPoll: {
+          startDate: 50,
+          endDate: 200,
           votes: [
-            { voter: { id: '0x123' }, choice: fromBuffer([1]) },
-            { voter: { id: '0x456' }, choice: fromBuffer([2, 1].reverse()) },
-            { voter: { id: '0x789' }, choice: fromBuffer([3]) },
-            { voter: { id: '0xabc' }, choice: fromBuffer([4, 3].reverse()) }
+            { voter: { id: '0x123' }, choice: fromBuffer([1]), blockTime: 100 },
+            { voter: { id: '0x456' }, choice: fromBuffer([2, 1].reverse()), blockTime: 100 },
+            { voter: { id: '0x789' }, choice: fromBuffer([3]), blockTime: 100 },
+            { voter: { id: '0xabc' }, choice: fromBuffer([4, 3].reverse()), blockTime: 100 }
           ]
         }
       })
